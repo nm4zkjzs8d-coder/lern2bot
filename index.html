@@ -3,14 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Robo Agent: Academy</title>
+    <title>Robo League</title>
     
-    <!-- iOS Icon Settings -->
-    <link rel="apple-touch-icon" href="https://placehold.co/180x180/1e40af/ffffff?text=ROBO&font=roboto">
+    <!-- iOS & PWA Settings -->
+    <link rel="apple-touch-icon" href="https://placehold.co/180x180/3b82f6/ffffff?text=ROBO&font=roboto">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#3b82f6">
 
-    <!-- Libraries -->
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -18,28 +20,47 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
     <style>
-        body { background-color: #0f172a; color: #e2e8f0; font-family: system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        body { 
+            background-color: #f0f9ff; 
+            color: #1e293b; 
+            font-family: 'Nunito', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+            overflow-x: hidden; 
+        }
         
-        /* Block Styles */
-        .code-block { display: inline-block; padding: 2px 6px; border-radius: 4px; font-family: 'Courier New', monospace; font-weight: 700; font-size: 0.85em; color: white; box-shadow: 0 2px 0 rgba(0,0,0,0.2); margin: 0 2px; white-space: nowrap; vertical-align: middle; }
-        .cb-event { background: #FFBF00; border: 1px solid #d4a000; color: #4a3800; }
-        .cb-control { background: #FFAB19; border: 1px solid #cf8b17; }
-        .cb-motion { background: #4C97FF; border: 1px solid #3373cc; }
-        .cb-looks { background: #9966FF; border: 1px solid #774bcb; }
-        .cb-sound { background: #CF63CF; border: 1px solid #b152b1; }
-        .cb-input { background: #5CB1D6; border: 1px solid #2E8EB8; }
+        /* Scratch/mBlock Imitation */
+        .code-block { display: inline-block; padding: 4px 8px; border-radius: 6px; font-family: 'Courier New', monospace; font-weight: 800; font-size: 0.9em; color: white; box-shadow: 0 3px 0 rgba(0,0,0,0.15); margin: 2px; white-space: nowrap; vertical-align: middle; border: 1px solid rgba(0,0,0,0.1); }
+        .cb-event { background: #fbbf24; color: #78350f; border-color: #d97706; }
+        .cb-control { background: #f59e0b; border-color: #b45309; }
+        .cb-motion { background: #3b82f6; border-color: #1d4ed8; }
+        .cb-looks { background: #8b5cf6; border-color: #6d28d9; }
+        .cb-sound { background: #ec4899; border-color: #be185d; }
+        .cb-input { background: #06b6d4; border-color: #0e7490; }
+        
+        .btn-bounce:active { transform: scale(0.95); }
         
         /* Animations */
-        .modal-enter { animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes modalSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
-        /* Admin Mode Styles */
-        .admin-stripe { background: repeating-linear-gradient(45deg, #7f1d1d, #7f1d1d 10px, #991b1b 10px, #991b1b 20px); }
-        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .anim-pop { animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .custom-checkbox:checked + div { background-color: #22c55e; border-color: #16a34a; color: white; }
+
+        /* TRADING CARD STYLES */
+        .card-holo {
+            background: linear-gradient(135deg, #fce7f3 0%, #e0f2fe 50%, #fef3c7 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .card-holo::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(transparent, rgba(255,255,255,0.4), transparent);
+            transform: rotate(30deg);
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -47,12 +68,62 @@
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
+        const ADMIN_PASS = "papa";
 
-        const ADMIN_PASS = "papa"; // Passwort für Admin-Bereich
+        // --- TRADING CARDS DATABASE ---
+        // Du kannst hier die Bilder anpassen! Lade sie in deinen GitHub 'images' Ordner.
+        // Format: { id: "c1", name: "...", image: "images/dein_bild.png", ... }
+        const TRADING_CARDS = {
+            "c1": {
+                id: "c1",
+                name: "mBot Neo Alpha",
+                image: "https://placehold.co/400x300/3b82f6/ffffff?text=mBot+Neo", // Später: "images/card_neo.png"
+                type: "MECHA",
+                hp: 120,
+                desc: "Der treue Partner. Spezialisiert auf schnelle Bewegungen und Emotionen.",
+                rarity: "Rare"
+            },
+            "c2": {
+                id: "c2",
+                name: "CyberPi Core",
+                image: "https://placehold.co/400x300/6366f1/ffffff?text=CyberPi", // Später: "images/card_cyberpi.png"
+                type: "BRAIN",
+                hp: 80,
+                desc: "Das Gehirn der Operation. Kann Daten verarbeiten und Sounds erzeugen.",
+                rarity: "Common"
+            },
+            "c3": {
+                id: "c3",
+                name: "Ultrasonic Eyes",
+                image: "https://placehold.co/400x300/10b981/ffffff?text=Ultra+Sonic", 
+                type: "SENSOR",
+                hp: 60,
+                desc: "Sieht Hindernisse in völliger Dunkelheit. Erkennt Wände aus 2m Entfernung.",
+                rarity: "Uncommon"
+            },
+            "c4": {
+                id: "c4",
+                name: "Quad RGB",
+                image: "https://placehold.co/400x300/f43f5e/ffffff?text=Quad+RGB", 
+                type: "SENSOR",
+                hp: 90,
+                desc: "Der Spurensucher. Kann jeder Linie folgen und Farben auf dem Boden scannen.",
+                rarity: "Epic"
+            }
+        };
+
+        // Mapping: Welche Lektion schaltet welche Karte frei?
+        // Wenn Joni Lektion 10 (Boss Season 1) schafft -> Karte c1
+        const REWARD_MAP = {
+            10: "c1", // Boss Season 1
+            20: "c2", // Boss Season 2
+            30: "c3", // Boss Season 3
+            40: "c4"  // Boss Season 4
+        };
+
 
         // --- COMPONENTS ---
 
-        // Code Highlighter
         const HighlightCode = ({ text }) => {
             const parts = text.split(/('.*?')/g);
             return (
@@ -74,211 +145,141 @@
             );
         };
 
-        // User Selection & Login Screen
+        // Trading Card Component
+        const TradingCard = ({ cardId, isLocked, onClick, size = "normal" }) => {
+            const card = TRADING_CARDS[cardId];
+            if (!card && !isLocked) return null;
+
+            const scaleClass = size === "large" ? "w-72 h-96 text-base" : "w-40 h-56 text-xs";
+
+            if (isLocked) {
+                return (
+                    <div className={`${scaleClass} bg-slate-200 rounded-xl border-4 border-slate-300 flex items-center justify-center relative overflow-hidden`}>
+                        <i className="fas fa-lock text-4xl text-slate-300"></i>
+                    </div>
+                );
+            }
+
+            return (
+                <div onClick={onClick} className={`${scaleClass} card-holo rounded-xl border-[6px] border-yellow-400 shadow-xl flex flex-col p-2 relative cursor-pointer transform transition-transform hover:scale-105 group`}>
+                    {/* Header */}
+                    <div className="flex justify-between items-center mb-1 px-1">
+                        <span className="font-black text-slate-700 uppercase opacity-70">{card.type}</span>
+                        <span className="font-black text-red-500">{card.hp} KP</span>
+                    </div>
+                    
+                    {/* Image */}
+                    <div className="flex-1 bg-white border-2 border-slate-200 rounded overflow-hidden relative mb-2">
+                        <img src={card.image} className="w-full h-full object-cover" />
+                        <div className="absolute bottom-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-1 rounded-tl">{card.rarity}</div>
+                    </div>
+                    
+                    {/* Info */}
+                    <div className="bg-white/80 p-2 rounded border border-slate-100 flex-grow-0 h-1/3 overflow-hidden">
+                        <h3 className="font-black text-slate-800 leading-tight mb-1">{card.name}</h3>
+                        <p className="text-slate-600 leading-tight opacity-90 line-clamp-3">{card.desc}</p>
+                    </div>
+                </div>
+            );
+        };
+
+        // Deck Modal
+        const DeckModal = ({ unlockedCards, onClose }) => {
+            return (
+                <div className="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur flex items-center justify-center p-4">
+                    <div className="bg-slate-50 w-full max-w-4xl h-[80vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden anim-pop border-4 border-slate-800">
+                        <div className="p-6 bg-slate-800 text-white flex justify-between items-center">
+                            <h2 className="text-3xl font-black italic uppercase tracking-wider text-yellow-400">
+                                <i className="fas fa-layer-group mr-3"></i>Mecha Deck
+                            </h2>
+                            <button onClick={onClose} className="w-10 h-10 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-white"><i className="fas fa-times text-xl"></i></button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto p-8 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 justify-items-center">
+                                {Object.keys(TRADING_CARDS).map(id => (
+                                    <TradingCard 
+                                        key={id} 
+                                        cardId={id} 
+                                        isLocked={!unlockedCards.includes(id)} 
+                                        size="normal"
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Login Screen
         const LoginScreen = ({ users, onSelectUser, onAddUser, onAdminLogin, hasCurriculum }) => {
             const [newUserName, setNewUserName] = useState("");
             const [showAddUser, setShowAddUser] = useState(false);
             const [adminInput, setAdminInput] = useState("");
             const [showAdminLogin, setShowAdminLogin] = useState(false);
 
-            const handleAddUser = () => {
-                if(newUserName.trim()) {
-                    onAddUser(newUserName.trim());
-                    setNewUserName("");
-                    setShowAddUser(false);
-                }
-            };
-
-            const handleAdminCheck = () => {
-                if(adminInput.toLowerCase() === ADMIN_PASS) {
-                    onAdminLogin();
-                } else {
-                    alert("Falsches Passwort!");
-                }
-            };
+            const handleAddUser = () => { if(newUserName.trim()) { onAddUser(newUserName.trim()); setNewUserName(""); setShowAddUser(false); }};
+            const handleAdminCheck = () => { if(adminInput.toLowerCase() === ADMIN_PASS) onAdminLogin(); else alert("Zugriff verweigert!"); };
 
             return (
-                <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-900 relative">
-                    
-                    {/* Header */}
-                    <div className="text-center mb-10">
-                        <div className="w-24 h-24 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-blue-900/50 animate-bounce-short">
+                <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-400 to-indigo-600 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+                        <i className="fas fa-microchip absolute top-10 left-10 text-9xl text-white animate-pulse"></i>
+                        <i className="fas fa-bolt absolute bottom-20 right-10 text-8xl text-yellow-300"></i>
+                    </div>
+
+                    <div className="bg-white/90 backdrop-blur-xl p-8 rounded-3xl shadow-2xl w-full max-w-md text-center relative z-10 anim-pop">
+                        <div className="w-24 h-24 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg border-4 border-white -mt-16">
                             <i className="fas fa-robot text-5xl text-white"></i>
                         </div>
-                        <h1 className="text-3xl font-bold text-white tracking-widest mb-1">ROBO ACADEMY</h1>
-                        <p className="text-slate-400 text-sm uppercase tracking-wide">Wer bist du?</p>
-                    </div>
+                        <h1 className="text-3xl font-black text-slate-800 mb-1">ROBO LEAGUE</h1>
+                        <p className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-8">Wähle deinen Tamer</p>
 
-                    {/* User Grid */}
-                    {!hasCurriculum && (
-                        <div className="bg-red-900/30 border border-red-500/50 text-red-200 p-4 rounded-xl mb-8 max-w-sm text-center">
-                            <i className="fas fa-exclamation-triangle mb-2 text-xl"></i><br/>
-                            Keine Lektionen geladen.<br/>
-                            <span className="text-xs">Bitte im Papa-Modus Lektionen importieren.</span>
-                        </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-4 w-full max-w-sm mb-8">
-                        {users.map(user => (
-                            <button 
-                                key={user} 
-                                onClick={() => onSelectUser(user)}
-                                className="bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-blue-500 transition-all p-6 rounded-xl flex flex-col items-center gap-3 shadow-lg group"
-                            >
-                                <div className="w-12 h-12 rounded-full bg-slate-700 group-hover:bg-blue-600 flex items-center justify-center transition-colors">
-                                    <span className="text-xl font-bold text-white">{user.charAt(0).toUpperCase()}</span>
-                                </div>
-                                <span className="font-bold text-slate-200 group-hover:text-white">{user}</span>
-                            </button>
-                        ))}
-                        
-                        {/* Add User Button */}
-                        {!showAddUser ? (
-                            <button onClick={() => setShowAddUser(true)} className="bg-slate-800/50 border-2 border-dashed border-slate-700 hover:border-slate-500 hover:bg-slate-800 transition-all p-6 rounded-xl flex flex-col items-center gap-3 text-slate-500 hover:text-slate-300">
-                                <i className="fas fa-plus text-2xl"></i>
-                                <span className="text-sm font-bold">Neu</span>
-                            </button>
-                        ) : (
-                            <div className="col-span-2 bg-slate-800 p-4 rounded-xl border border-blue-500/50 animate-fade-in">
-                                <input 
-                                    type="text" 
-                                    value={newUserName}
-                                    onChange={e => setNewUserName(e.target.value)}
-                                    placeholder="Name eingeben"
-                                    className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white mb-2 focus:border-blue-500 outline-none"
-                                    autoFocus
-                                />
-                                <div className="flex gap-2">
-                                    <button onClick={handleAddUser} className="flex-1 bg-blue-600 text-white py-2 rounded font-bold text-sm">OK</button>
-                                    <button onClick={() => setShowAddUser(false)} className="px-3 bg-slate-700 text-slate-300 rounded font-bold text-sm">X</button>
-                                </div>
+                        {!hasCurriculum && (
+                            <div className="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 rounded mb-6 text-sm text-left">
+                                <p className="font-bold">⚠ System Offline</p>
+                                <p>Bitte Papa bitten, das Training zu laden.</p>
                             </div>
                         )}
-                    </div>
 
-                    {/* Admin Trigger */}
-                    <div className="absolute bottom-6 right-6">
-                        {!showAdminLogin ? (
-                            <button onClick={() => setShowAdminLogin(true)} className="text-slate-700 hover:text-slate-500 transition">
-                                <i className="fas fa-user-shield text-xl"></i>
-                            </button>
-                        ) : (
-                            <div className="bg-slate-800 p-2 rounded-lg border border-slate-700 flex gap-2 shadow-xl animate-fade-in">
-                                <input 
-                                    type="password" 
-                                    value={adminInput}
-                                    onChange={e => setAdminInput(e.target.value)}
-                                    placeholder="Papa Code"
-                                    className="w-24 bg-slate-900 text-white text-xs p-1 rounded border border-slate-700"
-                                />
-                                <button onClick={handleAdminCheck} className="bg-red-600 text-white px-2 rounded text-xs font-bold">→</button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        };
-
-        // Admin Panel: Import/Export & Reset
-        const AdminPanel = ({ db, onImportCurriculum, onImportBackup, onResetData, closeAdmin }) => {
-            const fileInputRef = useRef();
-            const backupInputRef = useRef();
-
-            const handleFileLoad = (e, callback) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    try {
-                        const json = JSON.parse(event.target.result);
-                        callback(json);
-                    } catch (err) {
-                        alert("Fehler beim Lesen der Datei: " + err.message);
-                    }
-                };
-                reader.readAsText(file);
-            };
-
-            const downloadBackup = () => {
-                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
-                const downloadAnchorNode = document.createElement('a');
-                downloadAnchorNode.setAttribute("href", dataStr);
-                downloadAnchorNode.setAttribute("download", "robo_backup_" + new Date().toISOString().slice(0,10) + ".json");
-                document.body.appendChild(downloadAnchorNode);
-                downloadAnchorNode.click();
-                downloadAnchorNode.remove();
-            };
-
-            return (
-                <div className="fixed inset-0 z-50 bg-slate-900/98 backdrop-blur overflow-y-auto p-4 animate-fade-in custom-scrollbar">
-                    <div className="max-w-2xl mx-auto mt-10 mb-20">
-                        <div className="flex justify-between items-center mb-8 border-b border-red-500/30 pb-4">
-                            <h2 className="text-2xl font-bold text-red-400"><i className="fas fa-user-shield mr-2"></i>PAPA ZENTRALE</h2>
-                            <button onClick={closeAdmin} className="bg-slate-800 px-4 py-2 rounded text-white hover:bg-slate-700">Schließen</button>
-                        </div>
-                        
-                        {/* Section: Curriculum */}
-                        <div className="mb-8">
-                            <h3 className="text-white font-bold mb-4 border-l-4 border-blue-500 pl-3">1. Lektionen (Lehrplan)</h3>
-                            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
-                                <p className="text-slate-400 text-sm mb-4">Lade hier die <code>lektionen.json</code> Datei hoch, um neue Aufgaben in die App zu bringen.</p>
-                                <input 
-                                    type="file" 
-                                    accept=".json" 
-                                    ref={fileInputRef} 
-                                    className="hidden" 
-                                    onChange={(e) => handleFileLoad(e, onImportCurriculum)}
-                                />
-                                <button onClick={() => fileInputRef.current.click()} className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-lg flex items-center gap-3">
-                                    <i className="fas fa-file-upload"></i> Lehrplan importieren
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                            {users.map(user => (
+                                <button key={user} onClick={() => onSelectUser(user)} className="bg-white border-2 border-slate-100 hover:border-blue-400 hover:shadow-lg hover:-translate-y-1 transition-all p-4 rounded-2xl flex flex-col items-center gap-2 group">
+                                    <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl font-black group-hover:bg-blue-600 group-hover:text-white transition-colors">{user.charAt(0).toUpperCase()}</div>
+                                    <span className="font-bold text-slate-700">{user}</span>
                                 </button>
-                                <div className="mt-2 text-xs text-slate-500">
-                                    Aktuell geladen: {db.curriculum ? db.curriculum.length + " Seasons" : "Keine"}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Section: Backup */}
-                        <div className="mb-8">
-                            <h3 className="text-white font-bold mb-4 border-l-4 border-green-500 pl-3">2. Datensicherung</h3>
-                            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 grid gap-4">
-                                <div>
-                                    <p className="text-slate-400 text-sm mb-2">Speichere alle Fortschritte und User in einer Datei.</p>
-                                    <button onClick={downloadBackup} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 w-full justify-center">
-                                        <i className="fas fa-download"></i> Backup erstellen (Download)
-                                    </button>
-                                </div>
-                                <div className="border-t border-slate-700 pt-4">
-                                    <p className="text-slate-400 text-sm mb-2">Backup wiederherstellen:</p>
-                                    <input 
-                                        type="file" 
-                                        accept=".json" 
-                                        ref={backupInputRef} 
-                                        className="hidden" 
-                                        onChange={(e) => handleFileLoad(e, onImportBackup)}
-                                    />
-                                    <button onClick={() => backupInputRef.current.click()} className="bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold py-2 px-4 rounded-lg flex items-center gap-2 w-full justify-center">
-                                        <i className="fas fa-upload"></i> Backup laden
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Section: Danger Zone */}
-                        <div className="mb-8">
-                            <h3 className="text-white font-bold mb-4 border-l-4 border-red-500 pl-3">3. Gefahr</h3>
-                            <div className="bg-red-900/10 p-6 rounded-xl border border-red-900/30">
-                                <button onClick={() => { if(confirm("ALLES löschen? Wirklich?")) onResetData(); }} className="text-red-400 hover:text-red-300 text-sm underline">
-                                    <i className="fas fa-trash mr-1"></i> App komplett zurücksetzen (Alle User löschen)
+                            ))}
+                            {!showAddUser ? (
+                                <button onClick={() => setShowAddUser(true)} className="border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 text-slate-400 hover:text-blue-500 transition-all p-4 rounded-2xl flex flex-col items-center gap-2">
+                                    <div className="w-12 h-12 flex items-center justify-center"><i className="fas fa-plus text-2xl"></i></div><span className="font-bold text-sm">Neuer Spieler</span>
                                 </button>
-                            </div>
+                            ) : (
+                                <div className="col-span-2 bg-slate-50 p-3 rounded-2xl border border-blue-200">
+                                    <input type="text" value={newUserName} onChange={e => setNewUserName(e.target.value)} placeholder="Dein Name" className="w-full bg-white border border-slate-300 rounded-lg p-2 text-center font-bold text-slate-700 mb-2 focus:ring-2 focus:ring-blue-400 outline-none" autoFocus />
+                                    <div className="flex gap-2">
+                                        <button onClick={handleAddUser} className="flex-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-1 font-bold shadow">Start</button>
+                                        <button onClick={() => setShowAddUser(false)} className="px-3 text-slate-400 font-bold hover:text-slate-600">X</button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex justify-center">
+                            {!showAdminLogin ? (
+                                <button onClick={() => setShowAdminLogin(true)} className="text-slate-300 hover:text-slate-400 transition"><i className="fas fa-user-shield"></i></button>
+                            ) : (
+                                <div className="flex gap-2 bg-slate-100 p-1 rounded-full border border-slate-200">
+                                    <input type="password" value={adminInput} onChange={e => setAdminInput(e.target.value)} placeholder="Code" className="w-20 bg-transparent text-center text-xs outline-none" />
+                                    <button onClick={handleAdminCheck} className="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center text-xs"><i className="fas fa-arrow-right"></i></button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             );
         };
 
-        // Lesson Modal (Gleicher Code wie vorher, nur props angepasst)
+        // Lesson Modal
         const LessonModal = ({ lesson, onClose, onComplete, isAdmin }) => {
             const [tab, setTab] = useState('setup');
             const [checks, setChecks] = useState({setup: {}, steps: {}});
@@ -289,268 +290,317 @@
             const canFinish = (allSetup && allSteps && (!lesson.needsPhoto || photo)) || isAdmin;
 
             return (
-                <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm">
-                    <div className="bg-slate-900 w-full max-w-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] rounded-t-2xl sm:rounded-2xl border border-slate-700 shadow-2xl flex flex-col modal-enter overflow-hidden">
-                        <div className={`p-4 ${lesson.type === 'boss' ? 'bg-purple-900/50' : 'bg-slate-800'} border-b border-white/10 flex justify-between items-center shrink-0`}>
-                            <div>
-                                <span className="text-xs font-bold bg-black/30 px-2 py-1 rounded text-white/70 uppercase">Lektion {lesson.id}</span>
-                                <h2 className="text-xl font-bold text-white mt-1">{lesson.title}</h2>
+                <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center p-0 sm:p-6 bg-slate-900/60 backdrop-blur-sm">
+                    <div className="bg-white w-full max-w-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col anim-pop overflow-hidden">
+                        <div className={`p-6 ${lesson.type === 'boss' ? 'bg-gradient-to-r from-purple-600 to-indigo-600' : 'bg-gradient-to-r from-blue-500 to-cyan-500'} text-white flex justify-between items-start shrink-0 relative overflow-hidden`}>
+                            <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/20 rounded-full blur-2xl"></div>
+                            <div className="relative z-10">
+                                <span className="inline-block bg-black/20 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-2">Level {lesson.id}</span>
+                                <h2 className="text-2xl font-black leading-tight max-w-[80%]">{lesson.title}</h2>
                             </div>
-                            <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20"><i className="fas fa-times"></i></button>
+                            <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors btn-bounce relative z-10"><i className="fas fa-times text-lg"></i></button>
                         </div>
-                        <div className="flex border-b border-white/10 bg-slate-800 shrink-0">
-                            <button onClick={() => setTab('setup')} className={`flex-1 py-3 text-sm font-bold uppercase ${tab==='setup'?'text-blue-400 border-b-2 border-blue-400 bg-slate-800' : 'text-slate-400 hover:text-slate-200'}`}>Start</button>
-                            <button onClick={() => setTab('steps')} disabled={!allSetup && !isAdmin} className={`flex-1 py-3 text-sm font-bold uppercase ${tab==='steps'?'text-blue-400 border-b-2 border-blue-400 bg-slate-800':(!allSetup && !isAdmin ?'text-slate-600 cursor-not-allowed':'text-slate-400 hover:text-slate-200')}`}>Code</button>
-                            {lesson.sos && lesson.sos.length > 0 && <button onClick={() => setTab('sos')} className={`flex-1 py-3 text-sm font-bold uppercase ${tab==='sos'?'text-red-400 border-b-2 border-red-400 bg-slate-800' : 'text-slate-400 hover:text-slate-200'}`}>SOS</button>}
+
+                        <div className="flex border-b border-slate-100 bg-white shrink-0 p-2 gap-2">
+                            <button onClick={() => setTab('setup')} className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase transition-all ${tab==='setup'?'bg-blue-50 text-blue-600 ring-2 ring-blue-100':'text-slate-400 hover:bg-slate-50'}`}>1. Check</button>
+                            <button onClick={() => setTab('steps')} disabled={!allSetup && !isAdmin} className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase transition-all ${tab==='steps'?'bg-blue-50 text-blue-600 ring-2 ring-blue-100':(!allSetup && !isAdmin ?'opacity-50 cursor-not-allowed text-slate-300':'text-slate-400 hover:bg-slate-50')}`}>2. Training</button>
+                            {lesson.sos && <button onClick={() => setTab('sos')} className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase transition-all ${tab==='sos'?'bg-red-50 text-red-500 ring-2 ring-red-100':'text-slate-400 hover:bg-slate-50'}`}>Hilfe!</button>}
                         </div>
-                        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-900">
+
+                        <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
                             {tab === 'setup' && (
-                                <div className="space-y-4 animate-fade-in">
-                                    <div className="bg-blue-900/20 p-4 rounded text-blue-200 text-sm border border-blue-900/50"><i className="fas fa-rocket mr-2"></i> Checkliste vor dem Start</div>
+                                <div className="space-y-4">
+                                    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-start gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0"><i className="fas fa-clipboard-check"></i></div>
+                                        <div><h3 className="font-bold text-slate-800">System-Check</h3><p className="text-sm text-slate-500">Ist dein Partner bereit?</p></div>
+                                    </div>
                                     {lesson.setup.map((t, i) => (
-                                        <label key={i} className="flex gap-4 p-4 rounded-xl bg-slate-800/50 border border-slate-700 cursor-pointer hover:bg-slate-800 transition">
-                                            <input type="checkbox" className="w-6 h-6 accent-green-500" checked={!!checks.setup[i]} onChange={() => setChecks(p => ({...p, setup: {...p.setup, [i]: !p.setup[i]}}))} />
-                                            <span className={checks.setup[i] ? 'text-green-400 line-through' : 'text-slate-200'}>{t}</span>
+                                        <label key={i} className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${checks.setup[i] ? 'bg-green-50 border-green-400' : 'bg-white border-slate-200 hover:border-blue-300'}`}>
+                                            <input type="checkbox" className="custom-checkbox hidden" checked={!!checks.setup[i]} onChange={() => setChecks(p => ({...p, setup: {...p.setup, [i]: !p.setup[i]}}))} />
+                                            <div className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center shrink-0 font-bold transition-colors ${checks.setup[i] ? 'bg-green-500 border-green-500 text-white' : 'bg-slate-100 border-slate-300 text-transparent'}`}><i className="fas fa-check"></i></div>
+                                            <span className={`font-bold ${checks.setup[i] ? 'text-green-700 line-through opacity-70' : 'text-slate-700'}`}>{t}</span>
                                         </label>
                                     ))}
-                                    {(allSetup || isAdmin) && <button onClick={() => setTab('steps')} className="w-full py-4 bg-blue-600 text-white font-bold rounded-xl mt-4 shadow-lg hover:bg-blue-500 transition">Weiter zum Code ></button>}
+                                    {(allSetup || isAdmin) && (
+                                        <button onClick={() => setTab('steps')} className="w-full py-4 bg-blue-500 text-white font-black text-lg rounded-2xl shadow-lg shadow-blue-500/30 btn-bounce mt-4 flex items-center justify-center gap-2">Start Training <i className="fas fa-arrow-right"></i></button>
+                                    )}
                                 </div>
                             )}
+
                             {tab === 'steps' && (
-                                <div className="space-y-6 animate-fade-in">
-                                    <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                                        <h3 className="text-slate-400 text-xs font-bold uppercase mb-1">Ziel:</h3>
-                                        <p className="text-white text-lg">{lesson.goal}</p>
+                                <div className="space-y-6">
+                                    <div className="bg-white p-5 rounded-2xl border-l-8 border-yellow-400 shadow-sm">
+                                        <h3 className="text-slate-400 text-xs font-black uppercase tracking-wider mb-1">Missionsziel</h3>
+                                        <p className="text-slate-800 text-lg font-bold">{lesson.goal}</p>
                                     </div>
                                     {lesson.steps.map((s, i) => (
-                                        <div key={i} className={`p-4 rounded-xl border transition-all ${checks.steps[i] ? 'bg-green-900/10 border-green-900/30 opacity-60' : 'bg-slate-800 border-slate-700'}`}>
-                                            <div className="flex gap-3">
+                                        <div key={i} className={`p-4 rounded-2xl border-2 transition-all ${checks.steps[i] ? 'bg-green-50 border-green-200 opacity-60' : 'bg-white border-slate-200 shadow-sm'}`}>
+                                            <div className="flex gap-4">
                                                 <div className="flex flex-col items-center gap-2">
-                                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${checks.steps[i] ? 'bg-green-500 text-white' : 'bg-slate-700 text-slate-400'}`}>{i+1}</div>
-                                                    <input type="checkbox" className="w-6 h-6 accent-green-500" checked={!!checks.steps[i]} onChange={() => setChecks(p => ({...p, steps: {...p.steps, [i]: !p.steps[i]}}))} />
+                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-black ${checks.steps[i] ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-500'}`}>{i+1}</div>
+                                                    <input type="checkbox" className="w-8 h-8 accent-green-500" checked={!!checks.steps[i]} onChange={() => setChecks(p => ({...p, steps: {...p.steps, [i]: !p.steps[i]}}))} />
                                                 </div>
-                                                <div className="text-white flex-1"><HighlightCode text={s.text} />{s.hint && <div className="mt-2 text-sm text-slate-400 bg-black/20 p-2 rounded border-l-2 border-yellow-600"><i className="fas fa-lightbulb text-yellow-600 mr-2"></i>{s.hint}</div>}</div>
+                                                <div className="flex-1 pt-1">
+                                                    <div className="text-slate-700 font-medium text-lg leading-relaxed"><HighlightCode text={s.text} /></div>
+                                                    {s.hint && <div className="mt-3 text-sm text-slate-600 bg-yellow-50 p-3 rounded-xl border border-yellow-100 flex gap-3"><i className="fas fa-lightbulb text-yellow-500 mt-1"></i><span>{s.hint}</span></div>}
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
                                     {lesson.needsPhoto && (
-                                        <div className="pt-4 border-t border-slate-700">
-                                            <h3 className="font-bold mb-3 text-white"><i className="fas fa-camera mr-2"></i>Beweisfoto</h3>
+                                        <div className="mt-8">
+                                            <h3 className="font-black text-slate-700 mb-3 flex items-center gap-2"><i className="fas fa-camera text-blue-500"></i> Beweis-Foto</h3>
                                             {photo ? (
-                                                <div className="relative"><img src={photo} className="w-full h-48 object-cover rounded-xl shadow-lg" /><button onClick={() => setPhoto(null)} className="absolute top-2 right-2 bg-red-600 text-white w-8 h-8 rounded-full shadow"><i className="fas fa-trash"></i></button></div>
+                                                <div className="relative rounded-2xl overflow-hidden shadow-lg group">
+                                                    <img src={photo} className="w-full h-48 object-cover" />
+                                                    <button onClick={() => setPhoto(null)} className="absolute top-2 right-2 bg-red-500 text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center"><i className="fas fa-trash"></i></button>
+                                                    <div className="absolute bottom-0 w-full bg-green-500 text-white text-center py-1 text-xs font-bold">GESPEICHERT</div>
+                                                </div>
                                             ) : (
-                                                <label className="block w-full py-8 border-2 border-dashed border-slate-600 rounded-xl text-center cursor-pointer hover:bg-slate-800 transition hover:border-blue-500"><i className="fas fa-camera text-2xl mb-2 text-slate-400"></i><div className="text-slate-400">Foto machen</div><input type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files[0]){const r = new FileReader(); r.onload=()=>setPhoto(r.result); r.readAsDataURL(e.target.files[0]);}}} /></label>
+                                                <label className="block w-full py-8 border-4 border-dashed border-blue-200 rounded-3xl text-center cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-all group">
+                                                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-500 group-hover:scale-110 transition-transform"><i className="fas fa-camera text-2xl"></i></div>
+                                                    <div className="text-blue-500 font-bold">Foto aufnehmen</div>
+                                                    <input type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files[0]){const r = new FileReader(); r.onload=()=>setPhoto(r.result); r.readAsDataURL(e.target.files[0]);}}} />
+                                                </label>
                                             )}
                                         </div>
                                     )}
                                 </div>
                             )}
+
                             {tab === 'sos' && (
-                                <div className="space-y-4 animate-fade-in">
-                                    <h3 className="text-red-400 font-bold mb-2">Erste Hilfe</h3>
+                                <div className="space-y-4">
+                                    <div className="bg-red-50 p-4 rounded-2xl border border-red-100 flex items-center gap-3 text-red-600 font-bold"><i className="fas fa-kit-medical text-2xl"></i><span>Erste Hilfe Kasten</span></div>
                                     {lesson.sos.map((item, i) => (
-                                        <div key={i} className="bg-red-900/10 border border-red-900/30 p-4 rounded-xl">
-                                            <div className="font-bold text-red-200 mb-1"><i className="fas fa-bug mr-2"></i>{item.problem}</div>
-                                            <div className="text-slate-300 pl-6 text-sm">{item.solution}</div>
+                                        <div key={i} className="bg-white border border-red-100 p-5 rounded-2xl shadow-sm">
+                                            <div className="font-bold text-red-500 mb-2 flex items-center gap-2"><i className="fas fa-circle-question"></i> {item.problem}</div>
+                                            <div className="text-slate-600 pl-6 text-sm leading-relaxed">{item.solution}</div>
                                         </div>
                                     ))}
                                 </div>
                             )}
                         </div>
-                        <div className="p-4 border-t border-white/10 bg-slate-900 shrink-0">
-                            <button onClick={onComplete} disabled={!canFinish} className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg transition-transform ${canFinish ? 'bg-green-600 hover:bg-green-500 text-white hover:scale-[1.02]' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}>
-                                {canFinish ? <span><i className="fas fa-check-circle mr-2"></i>MISSION ABSCHLIESSEN</span> : <span><i className="fas fa-lock mr-2"></i>ERST ALLES ABHAKEN</span>}
+                        <div className="p-4 border-t border-slate-100 bg-white shrink-0">
+                            <button onClick={onComplete} disabled={!canFinish} className={`w-full py-4 rounded-2xl font-black text-xl shadow-lg btn-bounce flex items-center justify-center gap-3 transition-all ${canFinish ? 'bg-gradient-to-r from-green-400 to-green-600 text-white shadow-green-500/30' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}>
+                                {canFinish ? <span><i className="fas fa-check-circle"></i> QUEST ABGESCHLOSSEN!</span> : <span><i className="fas fa-lock"></i> ERST ALLES ABHAKEN</span>}
                             </button>
-                            {isAdmin && <div className="text-center text-xs text-red-400 mt-2 font-mono uppercase tracking-widest animate-pulse">Admin Override Active</div>}
                         </div>
                     </div>
                 </div>
             );
         };
 
-        // --- MAIN APP ---
-        const App = () => {
-            const [db, setDb] = useState(() => {
-                const saved = localStorage.getItem('robo_db');
-                return saved ? JSON.parse(saved) : { users: [], curriculum: [], progress: {} };
-            });
-            const [currentUser, setCurrentUser] = useState(null); // 'Joni', 'Mila', 'Admin'
-            const [activeLesson, setActiveLesson] = useState(null);
-            const [showAdmin, setShowAdmin] = useState(false);
+        const AdminPanel = ({ db, onImportCurriculum, onImportBackup, onResetData, closeAdmin }) => {
+            const fileInputRef = useRef();
+            const backupInputRef = useRef();
 
-            useEffect(() => {
-                localStorage.setItem('robo_db', JSON.stringify(db));
-            }, [db]);
-
-            // Actions
-            const addUser = (name) => {
-                if(!db.users.includes(name)) {
-                    setDb(prev => ({
-                        ...prev, 
-                        users: [...prev.users, name],
-                        progress: { ...prev.progress, [name]: {} } // Init progress store for user
-                    }));
-                }
+            const handleFileLoad = (e, callback) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => { try { const json = JSON.parse(event.target.result); callback(json); } catch (err) { alert("Fehler: " + err.message); }};
+                reader.readAsText(file);
             };
 
+            const downloadBackup = () => {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", "robo_backup.json");
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+            };
+
+            return (
+                <div className="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur overflow-y-auto p-4 custom-scrollbar">
+                    <div className="max-w-2xl mx-auto mt-10 mb-20 bg-white rounded-3xl p-8 shadow-2xl">
+                        <div className="flex justify-between items-center mb-8 border-b border-slate-100 pb-4">
+                            <h2 className="text-2xl font-black text-slate-800"><i className="fas fa-user-shield text-blue-500 mr-2"></i>PAPA ZENTRALE</h2>
+                            <button onClick={closeAdmin} className="bg-slate-100 px-4 py-2 rounded-xl font-bold text-slate-600 hover:bg-slate-200">Schließen</button>
+                        </div>
+                        <div className="grid gap-6">
+                            <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
+                                <h3 className="font-bold text-blue-800 mb-2">1. Lehrplan laden</h3>
+                                <p className="text-sm text-blue-600 mb-4">Lade die <code>seasonX.json</code> Dateien hier hoch.</p>
+                                <input type="file" accept=".json" ref={fileInputRef} className="hidden" onChange={(e) => handleFileLoad(e, onImportCurriculum)} />
+                                <button onClick={() => fileInputRef.current.click()} className="bg-blue-500 text-white font-bold py-3 px-6 rounded-xl w-full hover:bg-blue-600 shadow-lg shadow-blue-500/20"><i className="fas fa-cloud-upload-alt mr-2"></i> Importieren</button>
+                                <div className="mt-2 text-xs text-blue-400 text-center">{db.curriculum ? db.curriculum.length + " Seasons geladen" : "Leer"}</div>
+                            </div>
+                            <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
+                                <h3 className="font-bold text-green-800 mb-2">2. Backup</h3>
+                                <div className="flex gap-4">
+                                    <button onClick={downloadBackup} className="flex-1 bg-green-500 text-white font-bold py-3 rounded-xl hover:bg-green-600 shadow-lg shadow-green-500/20"><i className="fas fa-download mr-2"></i> Speichern</button>
+                                    <input type="file" accept=".json" ref={backupInputRef} className="hidden" onChange={(e) => handleFileLoad(e, onImportBackup)} />
+                                    <button onClick={() => backupInputRef.current.click()} className="flex-1 bg-white border-2 border-green-500 text-green-600 font-bold py-3 rounded-xl hover:bg-green-50"><i className="fas fa-upload mr-2"></i> Laden</button>
+                                </div>
+                            </div>
+                            <div className="border-t pt-6">
+                                <button onClick={() => { if(confirm("ALLES löschen?")) onResetData(); }} className="text-red-400 text-sm font-bold hover:text-red-600"><i className="fas fa-trash mr-1"></i> App komplett zurücksetzen</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Main App
+        const App = () => {
+            const [db, setDb] = useState(() => {
+                const saved = localStorage.getItem('robo_db_v2');
+                return saved ? JSON.parse(saved) : { users: [], curriculum: [], progress: {} };
+            });
+            const [currentUser, setCurrentUser] = useState(null);
+            const [activeLesson, setActiveLesson] = useState(null);
+            const [showAdmin, setShowAdmin] = useState(false);
+            const [showDeck, setShowDeck] = useState(false);
+            const [newCard, setNewCard] = useState(null);
+
+            useEffect(() => localStorage.setItem('robo_db_v2', JSON.stringify(db)), [db]);
+
+            const addUser = (name) => {
+                if(!db.users.includes(name)) {
+                    setDb(prev => ({ ...prev, users: [...prev.users, name], progress: { ...prev.progress, [name]: { lessons: {}, cards: [] } } }));
+                }
+            };
+            
             const finishLesson = (lessonId) => {
-                if(currentUser === 'Admin') return; // Admin speichert keinen Fortschritt
-                setDb(prev => ({
-                    ...prev,
-                    progress: {
-                        ...prev.progress,
-                        [currentUser]: {
-                            ...(prev.progress[currentUser] || {}),
-                            [lessonId]: true
-                        }
-                    }
+                if(currentUser === 'Admin') return;
+                
+                // 1. Check for rewards
+                const rewardCardId = REWARD_MAP[lessonId];
+                let cardUnlocked = false;
+                let currentCards = db.progress[currentUser].cards || [];
+
+                if(rewardCardId && !currentCards.includes(rewardCardId)) {
+                    currentCards = [...currentCards, rewardCardId];
+                    setNewCard(rewardCardId); // Trigger Animation
+                    cardUnlocked = true;
+                }
+
+                // 2. Save Progress
+                setDb(prev => ({ 
+                    ...prev, 
+                    progress: { 
+                        ...prev.progress, 
+                        [currentUser]: { 
+                            lessons: { ...(prev.progress[currentUser].lessons || {}), [lessonId]: true },
+                            cards: currentCards
+                        } 
+                    } 
                 }));
                 setActiveLesson(null);
             };
 
             const importCurriculum = (json) => {
-                if(Array.isArray(json)) {
-                    setDb(prev => ({ ...prev, curriculum: json }));
-                    alert("Lehrplan erfolgreich importiert! " + json.length + " Seasons geladen.");
-                    setShowAdmin(false);
-                } else {
-                    alert("Falsches Format! Die Datei muss eine Liste (Array) von Seasons sein.");
-                }
+                if(Array.isArray(json)) { setDb(prev => ({ ...prev, curriculum: json })); alert("Training geladen!"); setShowAdmin(false); } 
+                else alert("Falsches Format!");
             };
+            const importBackup = (json) => { if(json.users) { setDb(json); alert("Wiederhergestellt!"); setShowAdmin(false); }};
+            const resetData = () => { setDb({ users: [], curriculum: [], progress: {} }); setShowAdmin(false); setCurrentUser(null); };
 
-            const importBackup = (json) => {
-                if(json.users && json.progress) {
-                    setDb(json);
-                    alert("Backup wiederhergestellt!");
-                    setShowAdmin(false);
-                } else {
-                    alert("Ungültiges Backup-Format.");
-                }
-            };
+            if (!currentUser) return <LoginScreen users={db.users} onSelectUser={setCurrentUser} onAddUser={addUser} onAdminLogin={() => { setCurrentUser('Admin'); setShowAdmin(true); }} hasCurriculum={db.curriculum && db.curriculum.length > 0} />;
 
-            const resetData = () => {
-                setDb({ users: [], curriculum: [], progress: {} });
-                setShowAdmin(false);
-                setCurrentUser(null);
-            };
-
-            // Render Logic
-            if (!currentUser) {
-                return <LoginScreen 
-                    users={db.users} 
-                    onSelectUser={setCurrentUser} 
-                    onAddUser={addUser}
-                    onAdminLogin={() => { setCurrentUser('Admin'); setShowAdmin(true); }}
-                    hasCurriculum={db.curriculum && db.curriculum.length > 0}
-                />;
-            }
-
-            // Determine completed lessons for current user
-            const completed = (currentUser === 'Admin') ? {} : (db.progress[currentUser] || {});
+            const userProgress = (currentUser === 'Admin') ? { lessons: {}, cards: [] } : (db.progress[currentUser] || { lessons: {}, cards: [] });
+            const completedLessons = userProgress.lessons || {};
+            const unlockedCards = userProgress.cards || [];
+            const xp = Object.keys(completedLessons).length * 100;
 
             return (
-                <div className="min-h-screen pb-12 bg-slate-950">
-                    {/* Header */}
-                    <div className={`sticky top-0 z-30 ${currentUser==='Admin' ? 'admin-stripe' : 'bg-slate-900/90'} backdrop-blur border-b border-white/10 px-4 py-3 shadow-lg flex justify-between items-center`}>
-                        <div className="flex items-center gap-3" onClick={() => setCurrentUser(null)}>
-                            <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-900/50 cursor-pointer hover:bg-blue-500 transition"><i className="fas fa-arrow-left text-white text-xl"></i></div>
+                <div className="min-h-screen pb-12 bg-slate-50">
+                    <div className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-200 px-4 py-3 shadow-sm flex justify-between items-center">
+                        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setCurrentUser(null)}>
+                            <div className="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-105 transition-transform"><i className="fas fa-chevron-left"></i></div>
                             <div>
-                                <div className="text-xs text-blue-400 font-bold uppercase tracking-wider">{currentUser === 'Admin' ? 'PAPA MODE' : `AGENT ${currentUser.toUpperCase()}`}</div>
-                                <div className="text-white font-bold leading-none">Robo Academy</div>
+                                <div className="text-xs text-blue-500 font-black uppercase tracking-wider">{currentUser === 'Admin' ? 'PAPA MODE' : `TAMER ${currentUser.toUpperCase()}`}</div>
+                                <div className="text-slate-800 font-black leading-none text-lg">Robo League</div>
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
                             {currentUser !== 'Admin' && (
-                                <div className="bg-slate-800 px-3 py-1 rounded-full border border-slate-700 text-sm font-bold text-yellow-500 shadow-inner">
-                                    <i className="fas fa-star mr-2"></i>{Object.keys(completed).length * 100} XP
-                                </div>
+                                <>
+                                    <button onClick={() => setShowDeck(true)} className="bg-slate-800 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg hover:scale-105 transition flex items-center gap-2">
+                                        <i className="fas fa-layer-group text-yellow-400"></i> Deck
+                                    </button>
+                                    <div className="bg-yellow-100 px-3 py-1 rounded-full border border-yellow-200 text-sm font-black text-yellow-600 flex items-center gap-2">
+                                        <i className="fas fa-bolt"></i> {xp} XP
+                                    </div>
+                                </>
                             )}
-                            {currentUser === 'Admin' && (
-                                <button onClick={() => setShowAdmin(true)} className="bg-red-600 text-white px-3 py-1 rounded text-sm font-bold shadow hover:bg-red-500 transition">
-                                    <i className="fas fa-cogs mr-1"></i> Admin
-                                </button>
-                            )}
+                            {currentUser === 'Admin' && <button onClick={() => setShowAdmin(true)} className="bg-slate-800 text-white px-3 py-1 rounded-lg text-sm font-bold">Admin</button>}
                         </div>
                     </div>
 
-                    {/* Content Grid */}
                     <div className="max-w-3xl mx-auto p-4 space-y-8 mt-4">
                         {(!db.curriculum || db.curriculum.length === 0) && (
-                            <div className="text-center mt-20 text-slate-500">
-                                <i className="fas fa-box-open text-4xl mb-4"></i>
-                                <p>Keine Lektionen geladen.</p>
-                                {currentUser === 'Admin' && <p className="text-sm mt-2 text-blue-400">Nutze das Admin-Menü um Daten zu importieren.</p>}
+                            <div className="text-center mt-20 text-slate-400">
+                                <div className="w-32 h-32 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4"><i className="fas fa-ghost text-5xl opacity-50"></i></div>
+                                <h3 className="font-bold text-xl text-slate-600">Keine Quests verfügbar</h3>
+                                <p className="text-sm">Papa muss das Training erst laden.</p>
                             </div>
                         )}
 
-                        {db.curriculum.map((season, sIdx) => (
+                        {db.curriculum.map((season) => (
                             <div key={season.id} className="relative">
-                                {/* Season Header */}
-                                <div className="flex items-center gap-4 mb-4 pl-2">
-                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl bg-${season.color}-600/20 text-${season.color}-400 border border-${season.color}-500/50 shadow-lg shadow-${season.color}-900/20`}>
+                                <div className="flex items-center gap-4 mb-6 pl-2">
+                                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl bg-white shadow-lg border-2 border-${season.color}-100 text-${season.color}-500 transform rotate-3`}>
                                         <i className={`fas ${season.icon}`}></i>
                                     </div>
                                     <div>
-                                        <h2 className="text-2xl font-bold text-white tracking-tight">{season.title}</h2>
-                                        <p className="text-slate-400 text-sm">{season.description}</p>
+                                        <h2 className="text-3xl font-black text-slate-800 tracking-tight uppercase italic">{season.title}</h2>
+                                        <p className="text-slate-500 font-bold text-sm">{season.description}</p>
                                     </div>
                                 </div>
 
-                                {/* Lesson List */}
-                                <div className="space-y-3 pl-8 border-l-2 border-slate-800 ml-6">
+                                <div className="grid gap-4">
                                     {season.lessons.map((lesson, lIdx) => {
-                                        const isDone = completed[lesson.id];
-                                        // Lock Logic
+                                        const isDone = completedLessons[lesson.id];
                                         let isLocked = false;
-                                        if (lIdx > 0 && !completed[season.lessons[lIdx-1].id]) isLocked = true;
+                                        if (lIdx > 0 && !completedLessons[season.lessons[lIdx-1].id]) isLocked = true;
                                         if (currentUser === 'Admin') isLocked = false;
 
                                         return (
-                                            <button 
-                                                key={lesson.id} 
-                                                disabled={isLocked}
-                                                onClick={() => setActiveLesson(lesson)}
-                                                className={`w-full text-left relative group transition-all duration-300 transform ${isLocked ? 'opacity-40 grayscale cursor-not-allowed' : 'hover:scale-[1.01] cursor-pointer'}`}
-                                            >
-                                                <div className={`absolute -left-[41px] top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-4 border-slate-900 z-10 shadow-lg ${isDone ? 'bg-green-500' : isLocked ? 'bg-slate-700' : 'bg-blue-500 animate-pulse'}`}></div>
-                                                <div className={`p-4 rounded-xl border flex justify-between items-center shadow-lg ${isDone ? 'bg-gradient-to-r from-green-900/20 to-slate-900 border-green-900/50' : 'bg-slate-800 border-slate-700'}`}>
-                                                    <div>
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${isDone ? 'bg-green-900 text-green-400' : 'bg-slate-900 text-slate-500'}`}>Lektion {lesson.id}</span>
-                                                            {lesson.type === 'boss' && <span className="text-purple-400 text-[10px] border border-purple-500/30 px-1 rounded animate-pulse">BOSS</span>}
-                                                            {lesson.type === 'challenge' && <span className="text-yellow-400 text-[10px] border border-yellow-500/30 px-1 rounded">CHALLENGE</span>}
+                                            <button key={lesson.id} disabled={isLocked} onClick={() => setActiveLesson(lesson)} className={`w-full text-left relative group transition-all duration-300 transform ${isLocked ? 'opacity-60 scale-95 grayscale cursor-not-allowed' : 'hover:scale-[1.02] cursor-pointer'}`}>
+                                                <div className={`bg-white p-5 rounded-3xl border-b-4 border-r-4 transition-all flex justify-between items-center ${isDone ? 'border-green-500 shadow-none bg-green-50' : isLocked ? 'border-slate-200' : 'border-blue-500 shadow-xl shadow-blue-200'}`}>
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg ${isDone ? 'bg-green-500 text-white' : isLocked ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-600'}`}>
+                                                            {isDone ? <i className="fas fa-check"></i> : lesson.id}
                                                         </div>
-                                                        <h3 className={`font-bold text-lg ${isDone ? 'text-green-400' : 'text-white'}`}>{lesson.title}</h3>
+                                                        <div>
+                                                            <div className="flex gap-2 mb-1">
+                                                                {lesson.type === 'boss' && <span className="bg-purple-100 text-purple-600 text-[10px] px-2 py-0.5 rounded-full font-black uppercase">Arena Kampf</span>}
+                                                                {lesson.type === 'challenge' && <span className="bg-orange-100 text-orange-600 text-[10px] px-2 py-0.5 rounded-full font-black uppercase">Challenge</span>}
+                                                            </div>
+                                                            <h3 className={`font-black text-lg ${isDone ? 'text-green-700' : 'text-slate-700'}`}>{lesson.title}</h3>
+                                                        </div>
                                                     </div>
-                                                    <i className={`fas ${isDone ? 'fa-check-circle text-green-500' : isLocked ? 'fa-lock text-slate-600' : 'fa-play-circle text-blue-400 text-2xl group-hover:text-white transition'}`}></i>
+                                                    <div className="text-2xl opacity-20">
+                                                        <i className={`fas ${isLocked ? 'fa-lock' : 'fa-chevron-right'}`}></i>
+                                                    </div>
                                                 </div>
                                             </button>
                                         );
                                     })}
-                                    {season.lessons.length === 0 && <div className="text-slate-600 text-xs italic pl-4">Noch keine Inhalte</div>}
                                 </div>
                             </div>
                         ))}
                     </div>
 
-                    {/* Modals */}
-                    {activeLesson && (
-                        <LessonModal 
-                            lesson={activeLesson} 
-                            onClose={() => setActiveLesson(null)} 
-                            onComplete={() => finishLesson(activeLesson.id)}
-                            isAdmin={currentUser === 'Admin'}
-                        />
-                    )}
-
-                    {showAdmin && (
-                        <AdminPanel 
-                            db={db}
-                            onImportCurriculum={importCurriculum}
-                            onImportBackup={importBackup}
-                            onResetData={resetData}
-                            closeAdmin={() => setShowAdmin(false)} 
-                        />
+                    {activeLesson && <LessonModal lesson={activeLesson} onClose={() => setActiveLesson(null)} onComplete={() => finishLesson(activeLesson.id)} isAdmin={currentUser === 'Admin'} />}
+                    {showAdmin && <AdminPanel db={db} onImportCurriculum={importCurriculum} onImportBackup={importBackup} onResetData={resetData} closeAdmin={() => setShowAdmin(false)} />}
+                    {showDeck && <DeckModal unlockedCards={unlockedCards} onClose={() => setShowDeck(false)} />}
+                    
+                    {/* NEW CARD UNLOCK ANIMATION */}
+                    {newCard && (
+                        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur animate-fade-in p-4" onClick={() => setNewCard(null)}>
+                             <div className="text-center anim-pop">
+                                 <h2 className="text-4xl font-black text-yellow-400 mb-6 drop-shadow-lg uppercase italic animate-bounce">Neue Karte freigeschaltet!</h2>
+                                 <div className="transform scale-150 mb-8">
+                                     <TradingCard cardId={newCard} isLocked={false} size="large" />
+                                 </div>
+                                 <p className="text-white text-lg font-bold animate-pulse">Tippen zum Fortfahren</p>
+                             </div>
+                        </div>
                     )}
                 </div>
             );
