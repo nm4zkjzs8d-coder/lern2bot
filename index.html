@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Robo League</title>
     
-    <!-- iOS & PWA Settings -->
     <link rel="apple-touch-icon" href="https://placehold.co/180x180/3b82f6/ffffff?text=ROBO">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#3b82f6">
 
-    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -43,7 +41,6 @@
         const { useState, useEffect, useRef } = React;
         const ADMIN_PASS = "papa";
 
-        // --- TRADING CARDS DATABASE ---
         const TRADING_CARDS = {
             "c1": { id: "c1", name: "mBot Neo Alpha", image: "images/card_c1.png" },
             "c2": { id: "c2", name: "Cyber Core", image: "images/card_c2.png" },
@@ -135,16 +132,106 @@
             );
         };
 
+        // --- QUIZ COMPONENTS ---
+
+        const QuizModal = ({ quiz, onClose, onFinish }) => {
+            const [currentQ, setCurrentQ] = useState(0);
+            const [score, setScore] = useState(0);
+            const [showResult, setShowResult] = useState(false);
+            const [selectedOption, setSelectedOption] = useState(null);
+            const [isCorrect, setIsCorrect] = useState(null);
+
+            const handleAnswer = (index) => {
+                if (selectedOption !== null) return;
+                setSelectedOption(index);
+                const correct = index === quiz.questions[currentQ].correct;
+                setIsCorrect(correct);
+                if (correct) setScore(score + 1);
+
+                setTimeout(() => {
+                    if (currentQ < quiz.questions.length - 1) {
+                        setCurrentQ(currentQ + 1);
+                        setSelectedOption(null);
+                        setIsCorrect(null);
+                    } else {
+                        setShowResult(true);
+                    }
+                }, 1500);
+            };
+
+            if (showResult) {
+                const passed = score >= Math.ceil(quiz.questions.length * 0.7); // 70% to pass
+                return (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur p-4 anim-pop">
+                        <div className="bg-white p-8 rounded-3xl max-w-md w-full text-center">
+                            <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 ${passed ? 'bg-green-100 text-green-500' : 'bg-red-100 text-red-500'}`}>
+                                <i className={`fas ${passed ? 'fa-trophy' : 'fa-times'} text-5xl`}></i>
+                            </div>
+                            <h2 className="text-3xl font-black text-slate-800 mb-2">{passed ? "Prüfung bestanden!" : "Leider durchgefallen"}</h2>
+                            <p className="text-slate-500 mb-6 font-bold">{score} von {quiz.questions.length} Fragen richtig.</p>
+                            <button onClick={() => onFinish(passed, score)} className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white font-black rounded-xl shadow-lg btn-bounce">
+                                {passed ? "Urkunde abholen" : "Nochmal versuchen"}
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            const q = quiz.questions[currentQ];
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/95 backdrop-blur p-4">
+                    <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[80vh] anim-pop">
+                        <div className="p-6 bg-slate-800 text-white flex justify-between items-center">
+                            <div>
+                                <span className="text-xs font-black uppercase text-blue-400 tracking-wider">Quiz: {quiz.title}</span>
+                                <div className="text-sm font-bold text-slate-400">Frage {currentQ + 1} von {quiz.questions.length}</div>
+                            </div>
+                            <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center"><i className="fas fa-times"></i></button>
+                        </div>
+                        
+                        <div className="flex-1 p-8 flex flex-col justify-center bg-slate-50">
+                            <h2 className="text-2xl font-black text-slate-800 mb-8 text-center leading-tight">{q.q}</h2>
+                            <div className="space-y-4">
+                                {q.options.map((opt, idx) => {
+                                    let btnClass = "bg-white border-2 border-slate-200 text-slate-600 hover:border-blue-400 hover:text-blue-600";
+                                    if (selectedOption !== null) {
+                                        if (idx === q.correct) btnClass = "bg-green-500 border-green-500 text-white"; // Right
+                                        else if (idx === selectedOption) btnClass = "bg-red-500 border-red-500 text-white"; // Wrong
+                                        else btnClass = "bg-slate-100 border-slate-200 text-slate-400 opacity-50"; // Others
+                                    }
+                                    return (
+                                        <button 
+                                            key={idx} 
+                                            onClick={() => handleAnswer(idx)} 
+                                            disabled={selectedOption !== null}
+                                            className={`w-full p-5 rounded-2xl font-bold text-lg text-left transition-all duration-200 shadow-sm ${btnClass}`}
+                                        >
+                                            <span className="inline-block w-8 font-black opacity-50">{String.fromCharCode(65+idx)}.</span> {opt}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        
+                        {/* Progress Bar */}
+                        <div className="h-2 bg-slate-200 w-full">
+                            <div className="h-full bg-blue-500 transition-all duration-500" style={{width: `${((currentQ) / quiz.questions.length) * 100}%`}}></div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- EXISTING MODALS (Shortened for brevity but kept functional) ---
         const CardDetailModal = ({ cardId, onClose }) => {
-            const card = TRADING_CARDS[cardId];
-            if(!card) return null;
+            const card = TRADING_CARDS[cardId]; if(!card) return null;
             return (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur p-4 anim-pop" onClick={onClose}>
                     <div className="bg-white p-6 rounded-3xl max-w-sm w-full text-center relative" onClick={e => e.stopPropagation()}>
                         <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 bg-slate-100 rounded-full font-bold text-slate-600 hover:bg-slate-200">X</button>
                         <h2 className="text-2xl font-black text-slate-800 mb-1">{card.name}</h2>
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-4">Karte #{card.id.substring(1)}</p>
-                        <div className="flex justify-center mb-6"><TradingCard cardId={cardId} isLocked={false} size="large" /></div>
+                        <div className="flex justify-center mb-6 mt-4"><TradingCard cardId={cardId} isLocked={false} size="large" /></div>
                         <a href={card.image} download={`RoboCard_${card.id}.png`} className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95" onClick={e => e.stopPropagation()}><i className="fas fa-download"></i> Bild speichern</a>
                     </div>
                 </div>
@@ -157,17 +244,12 @@
                 <div className="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur flex items-center justify-center p-4">
                     <div className="bg-slate-50 w-full max-w-6xl h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden anim-pop border-4 border-slate-800">
                         <div className="p-6 bg-slate-800 text-white flex justify-between items-center shrink-0 shadow-lg z-10">
-                            <div>
-                                <h2 className="text-3xl font-black italic uppercase tracking-wider text-yellow-400 flex items-center gap-3"><i className="fas fa-layer-group"></i> Mecha Deck</h2>
-                                <p className="text-slate-400 text-sm font-bold ml-1 mt-1">{unlockedCards.length} / 25 Karten gesammelt</p>
-                            </div>
+                            <h2 className="text-3xl font-black italic uppercase tracking-wider text-yellow-400 flex items-center gap-3"><i className="fas fa-layer-group"></i> Mecha Deck</h2>
                             <button onClick={onClose} className="w-12 h-12 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-white transition-colors"><i className="fas fa-times text-xl"></i></button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-100 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-8 justify-items-center">
-                                {Object.keys(TRADING_CARDS).map(id => (
-                                    <TradingCard key={id} cardId={id} isLocked={!unlockedCards.includes(id)} size="normal" onClick={() => unlockedCards.includes(id) && setSelectedCard(id)} />
-                                ))}
+                                {Object.keys(TRADING_CARDS).map(id => (<TradingCard key={id} cardId={id} isLocked={!unlockedCards.includes(id)} size="normal" onClick={() => unlockedCards.includes(id) && setSelectedCard(id)} />))}
                             </div>
                         </div>
                     </div>
@@ -245,7 +327,7 @@
                                 </div>
                             )}
                         </div>
-                        <div className="p-4 border-t border-slate-100 bg-white shrink-0"><button onClick={onComplete} disabled={!canFinish} className={`w-full py-4 rounded-2xl font-black text-xl shadow-lg btn-bounce flex items-center justify-center gap-3 transition-all ${canFinish ? 'bg-gradient-to-r from-green-400 to-green-600 text-white shadow-green-500/30' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}>{canFinish ? <span><i className="fas fa-check-circle"></i> QUEST ABGESCHLOSSEN!</span> : <span><i className="fas fa-lock"></i> ERST ALLES ABHAKEN</span>}</button></div>
+                        <div className="p-4 border-t border-slate-100 bg-white shrink-0"><button onClick={onComplete} disabled={!canFinish} className={`w-full py-4 rounded-2xl font-black text-xl shadow-lg btn-bounce flex items-center justify-center gap-3 transition-all ${canFinish ? 'bg-gradient-to-r from-green-400 to-green-600 text-white shadow-green-500/30' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}>{canFinish ? <span><i className="fas fa-check-circle"></i> QUEST ABSCHLOSSEN!</span> : <span><i className="fas fa-lock"></i> ERST ALLES ABHAKEN</span>}</button></div>
                     </div>
                 </div>
             );
@@ -254,7 +336,26 @@
         const AdminPanel = ({ db, onImportCurriculum, onImportBackup, onResetData, closeAdmin }) => {
             const fileInputRef = useRef();
             const backupInputRef = useRef();
-            const handleFileLoad = (e, callback) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (event) => { try { const json = JSON.parse(event.target.result); callback(json); } catch (err) { alert("Fehler: " + err.message); }}; reader.readAsText(file); };
+            const handleFileLoad = (e, callback) => { 
+                const file = e.target.files[0]; if (!file) return; 
+                const reader = new FileReader(); 
+                reader.onload = (event) => { 
+                    try { 
+                        const json = JSON.parse(event.target.result); 
+                        // Auto-Detection: Is it a Quiz or a Curriculum?
+                        if (json.seasonId && json.questions) {
+                            // Mocking a different callback for Quiz
+                            // Since we pass generic callback, we'll handle this in the App component logic
+                            // But here we can't easily switch. 
+                            // Easier: App component handles the logic inside onImportCurriculum wrapper
+                            callback(json);
+                        } else {
+                            callback(json); 
+                        }
+                    } catch (err) { alert("Fehler: " + err.message); }
+                }; 
+                reader.readAsText(file); 
+            };
             const downloadBackup = () => { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db)); const downloadAnchorNode = document.createElement('a'); downloadAnchorNode.setAttribute("href", dataStr); downloadAnchorNode.setAttribute("download", "robo_backup.json"); document.body.appendChild(downloadAnchorNode); downloadAnchorNode.click(); downloadAnchorNode.remove(); };
 
             return (
@@ -262,7 +363,7 @@
                     <div className="max-w-2xl mx-auto mt-10 mb-20 bg-white rounded-3xl p-8 shadow-2xl">
                         <div className="flex justify-between items-center mb-8 border-b border-slate-100 pb-4"><h2 className="text-2xl font-black text-slate-800"><i className="fas fa-user-shield text-blue-500 mr-2"></i>PAPA ZENTRALE</h2><button onClick={closeAdmin} className="bg-slate-100 px-4 py-2 rounded-xl font-bold text-slate-600 hover:bg-slate-200">Schließen</button></div>
                         <div className="grid gap-6">
-                            <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100"><h3 className="font-bold text-blue-800 mb-2">1. Lehrplan laden</h3><p className="text-sm text-blue-600 mb-4">Lade die <code>seasonX.json</code> Dateien hier hoch.</p><input type="file" accept=".json" ref={fileInputRef} className="hidden" onChange={(e) => handleFileLoad(e, onImportCurriculum)} /><button onClick={() => fileInputRef.current.click()} className="bg-blue-500 text-white font-bold py-3 px-6 rounded-xl w-full hover:bg-blue-600 shadow-lg shadow-blue-500/20"><i className="fas fa-cloud-upload-alt mr-2"></i> Importieren</button><div className="mt-2 text-xs text-blue-400 text-center">{db.curriculum ? db.curriculum.length + " Seasons geladen" : "Leer"}</div></div>
+                            <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100"><h3 className="font-bold text-blue-800 mb-2">1. Datei Laden (Training oder Quiz)</h3><p className="text-sm text-blue-600 mb-4">Lade <code>seasonX.json</code> oder <code>quizX.json</code>.</p><input type="file" accept=".json" ref={fileInputRef} className="hidden" onChange={(e) => handleFileLoad(e, onImportCurriculum)} /><button onClick={() => fileInputRef.current.click()} className="bg-blue-500 text-white font-bold py-3 px-6 rounded-xl w-full hover:bg-blue-600 shadow-lg shadow-blue-500/20"><i className="fas fa-cloud-upload-alt mr-2"></i> Datei Importieren</button></div>
                             <div className="bg-green-50 p-6 rounded-2xl border border-green-100"><h3 className="font-bold text-green-800 mb-2">2. Backup</h3><div className="flex gap-4"><button onClick={downloadBackup} className="flex-1 bg-green-500 text-white font-bold py-3 rounded-xl hover:bg-green-600 shadow-lg shadow-green-500/20"><i className="fas fa-download mr-2"></i> Speichern</button><input type="file" accept=".json" ref={backupInputRef} className="hidden" onChange={(e) => handleFileLoad(e, onImportBackup)} /><button onClick={() => backupInputRef.current.click()} className="flex-1 bg-white border-2 border-green-500 text-green-600 font-bold py-3 rounded-xl hover:bg-green-50"><i className="fas fa-upload mr-2"></i> Laden</button></div></div>
                             <div className="border-t pt-6"><button onClick={() => { if(confirm("ALLES löschen?")) onResetData(); }} className="text-red-400 text-sm font-bold hover:text-red-600"><i className="fas fa-trash mr-1"></i> App komplett zurücksetzen</button></div>
                         </div>
@@ -272,16 +373,18 @@
         };
 
         const App = () => {
-            const [db, setDb] = useState(() => { const saved = localStorage.getItem('robo_db_v2'); return saved ? JSON.parse(saved) : { users: [], curriculum: [], progress: {} }; });
+            const [db, setDb] = useState(() => { const saved = localStorage.getItem('robo_db_v2'); return saved ? JSON.parse(saved) : { users: [], curriculum: [], quizzes: {}, progress: {} }; });
             const [currentUser, setCurrentUser] = useState(null);
             const [activeLesson, setActiveLesson] = useState(null);
+            const [activeQuiz, setActiveQuiz] = useState(null);
             const [showAdmin, setShowAdmin] = useState(false);
             const [showDeck, setShowDeck] = useState(false);
             const [newCard, setNewCard] = useState(null);
 
             useEffect(() => localStorage.setItem('robo_db_v2', JSON.stringify(db)), [db]);
 
-            const addUser = (name) => { if(!db.users.includes(name)) { setDb(prev => ({ ...prev, users: [...prev.users, name], progress: { ...prev.progress, [name]: { lessons: {}, cards: [] } } })); }};
+            const addUser = (name) => { if(!db.users.includes(name)) { setDb(prev => ({ ...prev, users: [...prev.users, name], progress: { ...prev.progress, [name]: { lessons: {}, quizzes: {}, cards: [] } } })); }};
+            
             const finishLesson = (lessonId) => {
                 if(currentUser === 'Admin') return;
                 const jsonReward = activeLesson.reward;
@@ -290,41 +393,66 @@
                 let cardUnlocked = false;
                 let currentCards = db.progress[currentUser].cards || [];
                 if(rewardCardId && !currentCards.includes(rewardCardId)) { currentCards = [...currentCards, rewardCardId]; setNewCard(rewardCardId); cardUnlocked = true; }
-                setDb(prev => ({ ...prev, progress: { ...prev.progress, [currentUser]: { lessons: { ...(prev.progress[currentUser].lessons || {}), [lessonId]: true }, cards: currentCards } } }));
+                
+                // Save progress (ensure objects exist)
+                const userProg = db.progress[currentUser] || { lessons: {}, quizzes: {}, cards: [] };
+                const lessons = userProg.lessons || {};
+                
+                setDb(prev => ({ ...prev, progress: { ...prev.progress, [currentUser]: { ...userProg, lessons: { ...lessons, [lessonId]: true }, cards: currentCards } } }));
                 setActiveLesson(null);
             };
-            const importCurriculum = (json) => { 
-                if(Array.isArray(json)) {
+
+            const finishQuiz = (quizId, passed, score) => {
+                setActiveQuiz(null);
+                if(currentUser === 'Admin') return;
+                if(passed) {
+                    const userProg = db.progress[currentUser] || { lessons: {}, quizzes: {}, cards: [] };
+                    const quizzes = userProg.quizzes || {};
+                    setDb(prev => ({ ...prev, progress: { ...prev.progress, [currentUser]: { ...userProg, quizzes: { ...quizzes, [quizId]: score } } } }));
+                    alert(`Glückwunsch! Du hast das Quiz mit ${score} Punkten bestanden!`);
+                }
+            };
+
+            // Smart Import: Handles both Curriculum (Array) and Quiz (Object)
+            const handleImport = (json) => {
+                if(Array.isArray(json)) { 
                     setDb(prev => {
                         const currentCurriculum = prev.curriculum || [];
                         let newCurriculum = [...currentCurriculum];
                         json.forEach(newSeason => {
                             const index = newCurriculum.findIndex(s => s.id === newSeason.id);
-                            if (index !== -1) { newCurriculum[index] = newSeason; } 
-                            else { newCurriculum.push(newSeason); }
+                            if (index !== -1) { newCurriculum[index] = newSeason; } else { newCurriculum.push(newSeason); }
                         });
-                        newCurriculum.sort((a, b) => {
-                            const numA = parseInt(a.id.replace('s', ''));
-                            const numB = parseInt(b.id.replace('s', ''));
-                            return numA - numB;
-                        });
+                        newCurriculum.sort((a, b) => { const numA = parseInt(a.id.replace('s', '')); const numB = parseInt(b.id.replace('s', '')); return numA - numB; });
                         return { ...prev, curriculum: newCurriculum };
                     });
-                    alert(`Erfolg! ${json.length} Season(s) importiert/aktualisiert.`);
-                    setShowAdmin(false);
-                } else {
-                    alert("Falsches Format! Die Datei muss eine Liste (Array) sein.");
+                    alert("Training geladen!"); 
+                } 
+                else if (json.seasonId && json.questions) {
+                    // Quiz Import
+                    setDb(prev => ({
+                        ...prev,
+                        quizzes: {
+                            ...prev.quizzes,
+                            [json.seasonId]: json // Store quiz by season ID
+                        }
+                    }));
+                    alert(`Quiz für ${json.seasonId} geladen!`);
                 }
+                else { alert("Unbekanntes Dateiformat."); }
+                setShowAdmin(false);
             };
+
             const importBackup = (json) => { if(json.users) { setDb(json); alert("Wiederhergestellt!"); setShowAdmin(false); }};
-            const resetData = () => { setDb({ users: [], curriculum: [], progress: {} }); setShowAdmin(false); setCurrentUser(null); };
+            const resetData = () => { setDb({ users: [], curriculum: [], quizzes: {}, progress: {} }); setShowAdmin(false); setCurrentUser(null); };
 
             if (!currentUser) return <LoginScreen users={db.users} onSelectUser={setCurrentUser} onAddUser={addUser} onAdminLogin={() => { setCurrentUser('Admin'); setShowAdmin(true); }} hasCurriculum={db.curriculum && db.curriculum.length > 0} />;
 
-            const userProgress = (currentUser === 'Admin') ? { lessons: {}, cards: [] } : (db.progress[currentUser] || { lessons: {}, cards: [] });
-            const completedLessons = userProgress.lessons || {};
-            const unlockedCards = userProgress.cards || [];
-            const xp = Object.keys(completedLessons).length * 100;
+            const userProg = (currentUser === 'Admin') ? { lessons: {}, quizzes: {}, cards: [] } : (db.progress[currentUser] || { lessons: {}, quizzes: {}, cards: [] });
+            const completedLessons = userProg.lessons || {};
+            const completedQuizzes = userProg.quizzes || {};
+            const unlockedCards = userProg.cards || [];
+            const xp = (Object.keys(completedLessons).length * 100) + (Object.keys(completedQuizzes).length * 500);
 
             return (
                 <div className="min-h-screen pb-12 bg-slate-50">
@@ -337,29 +465,61 @@
                     </div>
                     <div className="max-w-3xl mx-auto p-4 space-y-8 mt-4">
                         {(!db.curriculum || db.curriculum.length === 0) && (<div className="text-center mt-20 text-slate-400"><div className="w-32 h-32 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4"><i className="fas fa-ghost text-5xl opacity-50"></i></div><h3 className="font-bold text-xl text-slate-600">Keine Quests verfügbar</h3><p className="text-sm">Papa muss das Training erst laden.</p></div>)}
-                        {db.curriculum.map((season) => (
-                            <div key={season.id} className="relative">
-                                <div className="flex items-center gap-4 mb-6 pl-2"><div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl bg-white shadow-lg border-2 border-${season.color}-100 text-${season.color}-500 transform rotate-3`}><i className={`fas ${season.icon}`}></i></div><div><h2 className="text-3xl font-black text-slate-800 tracking-tight uppercase italic">{season.title}</h2><p className="text-slate-500 font-bold text-sm">{season.description}</p></div></div>
-                                <div className="grid gap-4">
-                                    {season.lessons.map((lesson, lIdx) => {
-                                        const isDone = completedLessons[lesson.id];
-                                        let isLocked = false;
-                                        if (lIdx > 0 && !completedLessons[season.lessons[lIdx-1].id]) isLocked = true;
-                                        if (currentUser === 'Admin') isLocked = false;
-                                        return (
-                                            <button key={lesson.id} disabled={isLocked} onClick={() => setActiveLesson(lesson)} className={`w-full text-left relative group transition-all duration-300 transform ${isLocked ? 'opacity-60 scale-95 grayscale cursor-not-allowed' : 'hover:scale-[1.02] cursor-pointer'}`}>
-                                                <div className={`bg-white p-5 rounded-3xl border-b-4 border-r-4 transition-all flex justify-between items-center ${isDone ? 'border-green-500 shadow-none bg-green-50' : isLocked ? 'border-slate-200' : 'border-blue-500 shadow-xl shadow-blue-200'}`}>
-                                                    <div className="flex items-center gap-4"><div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg ${isDone ? 'bg-green-500 text-white' : isLocked ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-600'}`}>{isDone ? <i className="fas fa-check"></i> : lesson.id}</div><div><div className="flex gap-2 mb-1">{lesson.type === 'boss' && <span className="bg-purple-100 text-purple-600 text-[10px] px-2 py-0.5 rounded-full font-black uppercase">Arena Kampf</span>}{lesson.type === 'challenge' && <span className="bg-orange-100 text-orange-600 text-[10px] px-2 py-0.5 rounded-full font-black uppercase">Challenge</span>}</div><h3 className={`font-black text-lg ${isDone ? 'text-green-700' : 'text-slate-700'}`}>{lesson.title}</h3></div></div><div className="text-2xl opacity-20"><i className={`fas ${isLocked ? 'fa-lock' : 'fa-chevron-right'}`}></i></div>
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
+                        {db.curriculum.map((season) => {
+                            // Check if all lessons in season are done
+                            const allLessonsDone = season.lessons.every(l => completedLessons[l.id]);
+                            const seasonQuiz = db.quizzes ? db.quizzes[season.id] : null;
+                            const quizDone = seasonQuiz && completedQuizzes[seasonQuiz.id];
+
+                            return (
+                                <div key={season.id} className="relative">
+                                    <div className="flex items-center gap-4 mb-6 pl-2"><div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl bg-white shadow-lg border-2 border-${season.color}-100 text-${season.color}-500 transform rotate-3`}><i className={`fas ${season.icon}`}></i></div><div><h2 className="text-3xl font-black text-slate-800 tracking-tight uppercase italic">{season.title}</h2><p className="text-slate-500 font-bold text-sm">{season.description}</p></div></div>
+                                    <div className="grid gap-4">
+                                        {season.lessons.map((lesson, lIdx) => {
+                                            const isDone = completedLessons[lesson.id];
+                                            let isLocked = false;
+                                            if (lIdx > 0 && !completedLessons[season.lessons[lIdx-1].id]) isLocked = true;
+                                            if (currentUser === 'Admin') isLocked = false;
+                                            return (
+                                                <button key={lesson.id} disabled={isLocked} onClick={() => setActiveLesson(lesson)} className={`w-full text-left relative group transition-all duration-300 transform ${isLocked ? 'opacity-60 scale-95 grayscale cursor-not-allowed' : 'hover:scale-[1.02] cursor-pointer'}`}>
+                                                    <div className={`bg-white p-5 rounded-3xl border-b-4 border-r-4 transition-all flex justify-between items-center ${isDone ? 'border-green-500 shadow-none bg-green-50' : isLocked ? 'border-slate-200' : 'border-blue-500 shadow-xl shadow-blue-200'}`}>
+                                                        <div className="flex items-center gap-4"><div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg ${isDone ? 'bg-green-500 text-white' : isLocked ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-600'}`}>{isDone ? <i className="fas fa-check"></i> : lesson.id}</div><div><div className="flex gap-2 mb-1">{lesson.type === 'boss' && <span className="bg-purple-100 text-purple-600 text-[10px] px-2 py-0.5 rounded-full font-black uppercase">Arena Kampf</span>}{lesson.type === 'challenge' && <span className="bg-orange-100 text-orange-600 text-[10px] px-2 py-0.5 rounded-full font-black uppercase">Challenge</span>}</div><h3 className={`font-black text-lg ${isDone ? 'text-green-700' : 'text-slate-700'}`}>{lesson.title}</h3></div></div><div className="text-2xl opacity-20"><i className={`fas ${isLocked ? 'fa-lock' : 'fa-chevron-right'}`}></i></div>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                        
+                                        {/* QUIZ BUTTON (Nur wenn Quiz existiert & Lektionen fertig sind) */}
+                                        {seasonQuiz && (
+                                            <div className="mt-4 border-t-2 border-slate-200 pt-4 border-dashed">
+                                                <button 
+                                                    onClick={() => setActiveQuiz(seasonQuiz)}
+                                                    disabled={!allLessonsDone && currentUser !== 'Admin'}
+                                                    className={`w-full p-6 rounded-3xl border-4 text-left relative transition-all group ${(!allLessonsDone && currentUser !== 'Admin') ? 'bg-slate-100 border-slate-300 opacity-70 grayscale cursor-not-allowed' : 'bg-yellow-50 border-yellow-400 hover:scale-105 cursor-pointer shadow-xl'}`}
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl border-4 ${quizDone ? 'bg-green-500 border-white text-white' : 'bg-yellow-400 border-yellow-200 text-yellow-900'}`}>
+                                                            <i className={`fas ${quizDone ? 'fa-check' : 'fa-graduation-cap'}`}></i>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs font-black uppercase text-yellow-600 tracking-widest mb-1">Abschluss-Prüfung</div>
+                                                            <h3 className="text-xl font-black text-slate-800">{seasonQuiz.title}</h3>
+                                                        </div>
+                                                        <div className="ml-auto text-3xl text-yellow-400">
+                                                            {(!allLessonsDone && currentUser !== 'Admin') ? <i className="fas fa-lock text-slate-300"></i> : <i className="fas fa-play-circle group-hover:scale-110 transition-transform"></i>}
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                     {activeLesson && <LessonModal lesson={activeLesson} onClose={() => setActiveLesson(null)} onComplete={() => finishLesson(activeLesson.id)} isAdmin={currentUser === 'Admin'} />}
-                    {showAdmin && <AdminPanel db={db} onImportCurriculum={importCurriculum} onImportBackup={importBackup} onResetData={resetData} closeAdmin={() => setShowAdmin(false)} />}
+                    {activeQuiz && <QuizModal quiz={activeQuiz} onClose={() => setActiveQuiz(null)} onFinish={(passed, score) => finishQuiz(activeQuiz.id, passed, score)} />}
+                    {showAdmin && <AdminPanel db={db} onImportCurriculum={handleImport} onImportBackup={importBackup} onResetData={resetData} closeAdmin={() => setShowAdmin(false)} />}
                     {showDeck && <DeckModal unlockedCards={unlockedCards} onClose={() => setShowDeck(false)} />}
                     {newCard && (
                         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur animate-fade-in p-4">
