@@ -71,13 +71,13 @@
         const ADMIN_PASS = "papa";
 
         // --- TRADING CARDS DATABASE ---
-        // Du kannst hier die Bilder anpassen! Lade sie in deinen GitHub 'images' Ordner.
-        // Format: { id: "c1", name: "...", image: "images/dein_bild.png", ... }
+        // Generiere 25 Karten-Slots. 
+        // Die ersten sind definiert, der Rest sind Platzhalter für deine GitHub Bilder.
         const TRADING_CARDS = {
             "c1": {
                 id: "c1",
                 name: "mBot Neo Alpha",
-                image: "https://placehold.co/400x300/3b82f6/ffffff?text=mBot+Neo", // Später: "images/card_neo.png"
+                image: "https://placehold.co/400x300/3b82f6/ffffff?text=mBot+Neo", // "images/card_c1.png"
                 type: "MECHA",
                 hp: 120,
                 desc: "Der treue Partner. Spezialisiert auf schnelle Bewegungen und Emotionen.",
@@ -86,7 +86,7 @@
             "c2": {
                 id: "c2",
                 name: "CyberPi Core",
-                image: "https://placehold.co/400x300/6366f1/ffffff?text=CyberPi", // Später: "images/card_cyberpi.png"
+                image: "https://placehold.co/400x300/6366f1/ffffff?text=CyberPi", 
                 type: "BRAIN",
                 hp: 80,
                 desc: "Das Gehirn der Operation. Kann Daten verarbeiten und Sounds erzeugen.",
@@ -109,16 +109,40 @@
                 hp: 90,
                 desc: "Der Spurensucher. Kann jeder Linie folgen und Farben auf dem Boden scannen.",
                 rarity: "Epic"
+            },
+            "c5": {
+                id: "c5",
+                name: "Der Eiserne Greifer",
+                image: "https://placehold.co/400x300/8b5cf6/ffffff?text=Greifer", 
+                type: "ACTOR",
+                hp: 150,
+                desc: "Stark genug für Felsen, sanft genug für Eier. Die Hand des Roboters.",
+                rarity: "Rare"
             }
         };
 
-        // Mapping: Welche Lektion schaltet welche Karte frei?
-        // Wenn Joni Lektion 10 (Boss Season 1) schafft -> Karte c1
+        // Fülle bis 25 auf (Platzhalter)
+        for(let i = 6; i <= 25; i++) {
+            const id = "c" + i;
+            TRADING_CARDS[id] = {
+                id: id,
+                name: "Geheimnisvolle Karte " + i,
+                image: `https://placehold.co/400x300/cbd5e1/64748b?text=Locked+${i}`, // Später: "images/card_c" + i + ".png"
+                type: "UNKNOWN",
+                hp: "?",
+                desc: "Diese Technologie wurde noch nicht entdeckt. Schließe weitere Trainings ab!",
+                rarity: "Common"
+            };
+        }
+
+        // REWARD MAPPING (Fallback)
+        // Du kannst Rewards auch direkt in der JSON der Lektion definieren mit "reward": "c5"
         const REWARD_MAP = {
-            10: "c1", // Boss Season 1
-            20: "c2", // Boss Season 2
-            30: "c3", // Boss Season 3
-            40: "c4"  // Boss Season 4
+            1: "c1",   // SOFORT-BELOHNUNG (Anfüttern)
+            5: "c2",   // ZWISCHEN-BELOHNUNG
+            10: "c3",  // BOSS SEASON 1
+            15: "c5",  // ZWISCHEN-BELOHNUNG
+            20: "c4"   // BOSS SEASON 2
         };
 
 
@@ -154,8 +178,9 @@
 
             if (isLocked) {
                 return (
-                    <div className={`${scaleClass} bg-slate-200 rounded-xl border-4 border-slate-300 flex items-center justify-center relative overflow-hidden`}>
-                        <i className="fas fa-lock text-4xl text-slate-300"></i>
+                    <div className={`${scaleClass} bg-slate-200 rounded-xl border-4 border-slate-300 flex items-center justify-center relative overflow-hidden opacity-50`}>
+                        <i className="fas fa-lock text-4xl text-slate-400"></i>
+                        <div className="absolute bottom-2 text-slate-400 font-bold text-xs">{cardId.toUpperCase()}</div>
                     </div>
                 );
             }
@@ -177,7 +202,36 @@
                     {/* Info */}
                     <div className="bg-white/80 p-2 rounded border border-slate-100 flex-grow-0 h-1/3 overflow-hidden">
                         <h3 className="font-black text-slate-800 leading-tight mb-1">{card.name}</h3>
-                        <p className="text-slate-600 leading-tight opacity-90 line-clamp-3">{card.desc}</p>
+                        <p className="text-slate-600 leading-tight opacity-90 line-clamp-3 text-[0.9em]">{card.desc}</p>
+                    </div>
+                </div>
+            );
+        };
+
+        // Card Detail Modal (For Downloading)
+        const CardDetailModal = ({ cardId, onClose }) => {
+            const card = TRADING_CARDS[cardId];
+            if(!card) return null;
+
+            return (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur p-4 anim-pop" onClick={onClose}>
+                    <div className="bg-white p-6 rounded-3xl max-w-sm w-full text-center" onClick={e => e.stopPropagation()}>
+                        <h2 className="text-2xl font-black text-slate-800 mb-4">{card.name}</h2>
+                        <div className="flex justify-center mb-6">
+                            <TradingCard cardId={cardId} isLocked={false} size="large" />
+                        </div>
+                        <div className="flex gap-3">
+                            <a 
+                                href={card.image} 
+                                download={`RoboCard_${card.id}.png`}
+                                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg flex items-center justify-center gap-2"
+                                onClick={e => e.stopPropagation()} 
+                            >
+                                <i className="fas fa-download"></i> Bild speichern
+                            </a>
+                            <button onClick={onClose} className="px-4 py-3 bg-slate-100 font-bold rounded-xl text-slate-600">X</button>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-4">Sammelkarte Nr. {card.id.substring(1)} von 25</p>
                     </div>
                 </div>
             );
@@ -185,29 +239,36 @@
 
         // Deck Modal
         const DeckModal = ({ unlockedCards, onClose }) => {
+            const [selectedCard, setSelectedCard] = useState(null);
+
             return (
                 <div className="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur flex items-center justify-center p-4">
-                    <div className="bg-slate-50 w-full max-w-4xl h-[80vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden anim-pop border-4 border-slate-800">
-                        <div className="p-6 bg-slate-800 text-white flex justify-between items-center">
-                            <h2 className="text-3xl font-black italic uppercase tracking-wider text-yellow-400">
-                                <i className="fas fa-layer-group mr-3"></i>Mecha Deck
-                            </h2>
+                    <div className="bg-slate-50 w-full max-w-5xl h-[85vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden anim-pop border-4 border-slate-800">
+                        <div className="p-6 bg-slate-800 text-white flex justify-between items-center shrink-0">
+                            <div>
+                                <h2 className="text-3xl font-black italic uppercase tracking-wider text-yellow-400">
+                                    <i className="fas fa-layer-group mr-3"></i>Mecha Deck
+                                </h2>
+                                <p className="text-slate-400 text-sm font-bold ml-1">{unlockedCards.length} / 25 Karten gesammelt</p>
+                            </div>
                             <button onClick={onClose} className="w-10 h-10 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-white"><i className="fas fa-times text-xl"></i></button>
                         </div>
                         
                         <div className="flex-1 overflow-y-auto p-8 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]">
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 justify-items-center">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 justify-items-center">
                                 {Object.keys(TRADING_CARDS).map(id => (
                                     <TradingCard 
                                         key={id} 
                                         cardId={id} 
                                         isLocked={!unlockedCards.includes(id)} 
                                         size="normal"
+                                        onClick={() => unlockedCards.includes(id) && setSelectedCard(id)}
                                     />
                                 ))}
                             </div>
                         </div>
                     </div>
+                    {selectedCard && <CardDetailModal cardId={selectedCard} onClose={() => setSelectedCard(null)} />}
                 </div>
             );
         };
@@ -467,8 +528,12 @@
             const finishLesson = (lessonId) => {
                 if(currentUser === 'Admin') return;
                 
-                // 1. Check for rewards
-                const rewardCardId = REWARD_MAP[lessonId];
+                // 1. Check for rewards (JSON-first, Map-fallback)
+                // Die JSON-Lektion hat evtl. ein Feld "reward": "c5"
+                const jsonReward = activeLesson.reward;
+                const mapReward = REWARD_MAP[lessonId];
+                const rewardCardId = jsonReward || mapReward;
+
                 let cardUnlocked = false;
                 let currentCards = db.progress[currentUser].cards || [];
 
@@ -592,13 +657,22 @@
                     
                     {/* NEW CARD UNLOCK ANIMATION */}
                     {newCard && (
-                        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur animate-fade-in p-4" onClick={() => setNewCard(null)}>
-                             <div className="text-center anim-pop">
+                        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur animate-fade-in p-4">
+                             <div className="text-center anim-pop" onClick={e => e.stopPropagation()}>
                                  <h2 className="text-4xl font-black text-yellow-400 mb-6 drop-shadow-lg uppercase italic animate-bounce">Neue Karte freigeschaltet!</h2>
-                                 <div className="transform scale-150 mb-8">
+                                 <div className="transform scale-150 mb-8" onClick={() => { setNewCard(null); setShowDeck(true); }}>
                                      <TradingCard cardId={newCard} isLocked={false} size="large" />
                                  </div>
-                                 <p className="text-white text-lg font-bold animate-pulse">Tippen zum Fortfahren</p>
+                                 <div className="flex gap-4 justify-center">
+                                     <button onClick={() => setNewCard(null)} className="bg-white/20 hover:bg-white/30 text-white border border-white font-bold py-2 px-6 rounded-full">Schließen</button>
+                                     <a 
+                                        href={TRADING_CARDS[newCard].image} 
+                                        download={`RoboCard_${newCard}.png`}
+                                        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full flex items-center gap-2"
+                                     >
+                                        <i className="fas fa-download"></i> Bild speichern
+                                     </a>
+                                 </div>
                              </div>
                         </div>
                     )}
