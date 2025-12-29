@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Robo Agent: Academy</title>
+    
+    <!-- iOS Icon Settings -->
+    <link rel="apple-touch-icon" href="https://placehold.co/180x180/1e40af/ffffff?text=ROBO&font=roboto">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Libraries -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body { background-color: #0f172a; color: #e2e8f0; font-family: system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        
+        /* Block Styles */
+        .code-block { display: inline-block; padding: 2px 6px; border-radius: 4px; font-family: 'Courier New', monospace; font-weight: 700; font-size: 0.85em; color: white; box-shadow: 0 2px 0 rgba(0,0,0,0.2); margin: 0 2px; white-space: nowrap; vertical-align: middle; }
+        .cb-event { background: #FFBF00; border: 1px solid #d4a000; color: #4a3800; }
+        .cb-control { background: #FFAB19; border: 1px solid #cf8b17; }
+        .cb-motion { background: #4C97FF; border: 1px solid #3373cc; }
+        .cb-looks { background: #9966FF; border: 1px solid #774bcb; }
+        .cb-sound { background: #CF63CF; border: 1px solid #b152b1; }
+        .cb-input { background: #5CB1D6; border: 1px solid #2E8EB8; }
+        
+        /* Animations */
+        .modal-enter { animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes modalSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* Admin Mode Styles */
+        .admin-stripe { background: repeating-linear-gradient(45deg, #7f1d1d, #7f1d1d 10px, #991b1b 10px, #991b1b 20px); }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- HIER WIRD DIE DATA.JS GELADEN -->
+    <script src="data.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- COMPONENTS ---
+
+        // Code Highlighter
+        const HighlightCode = ({ text }) => {
+            const parts = text.split(/('.*?')/g);
+            return (
+                <span>
+                    {parts.map((part, i) => {
+                        if (part.startsWith("'") && part.endsWith("'")) {
+                            const content = part.slice(1, -1);
+                            let color = "cb-control"; 
+                            if (content.match(/grüne Flagge|Taste|Wenn/i)) color = "cb-event";
+                            else if (content.match(/Bild|Zeige|LED/i)) color = "cb-looks";
+                            else if (content.match(/Audio|Sound|Spiele/i)) color = "cb-sound";
+                            else if (content.match(/bewege|drehe|Servo/i)) color = "cb-motion";
+                            else if (content.match(/Joystick|Abstand/i)) color = "cb-input";
+                            return <span key={i} className={`code-block ${color}`}>{content}</span>;
+                        }
+                        return part;
+                    })}
+                </span>
+            );
+        };
+
+        // Login Screen
+        const LoginScreen = ({ onLogin }) => {
+            const [input, setInput] = useState("");
+            const [error, setError] = useState(false);
+
+            const check = () => {
+                // Zugriff auf globale Variablen aus data.js
+                if (typeof USER_PASS !== 'undefined' && input.toLowerCase() === USER_PASS.toLowerCase()) onLogin('user');
+                else if (typeof ADMIN_PASS !== 'undefined' && input.toLowerCase() === ADMIN_PASS.toLowerCase()) onLogin('admin');
+                else { setError(true); setTimeout(() => setError(false), 1000); }
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-900">
+                    <div className="w-24 h-24 bg-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-2xl animate-bounce">
+                        <i className="fas fa-robot text-5xl text-white"></i>
+                    </div>
+                    <h1 className="text-2xl font-bold text-white mb-8 tracking-widest">ROBO ACADEMY</h1>
+                    <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="Code eingeben" 
+                        className="bg-slate-800 border-2 border-slate-700 text-white text-center text-xl p-4 rounded-xl w-full max-w-xs focus:border-blue-500 outline-none transition-all mb-4" />
+                    {error && <div className="text-red-400 font-bold mb-4 animate-pulse">ZUGRIFF VERWEIGERT</div>}
+                    <button onClick={check} className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-12 rounded-xl shadow-lg w-full max-w-xs">START</button>
+                    
+                    {/* Fallback falls data.js fehlt */}
+                    {(typeof CURRICULUM === 'undefined') && (
+                        <div className="mt-8 p-4 bg-red-900/30 text-red-200 text-sm rounded border border-red-500/30 max-w-xs text-center">
+                            <i className="fas fa-exclamation-triangle mr-1"></i> Fehler: <code>data.js</code> nicht gefunden.
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // Admin Panel Component
+        const AdminPanel = ({ completed, toggleLesson, closeAdmin }) => {
+            return (
+                <div className="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur overflow-y-auto p-4 animate-fade-in custom-scrollbar">
+                    <div className="max-w-2xl mx-auto mt-10 mb-20">
+                        <div className="flex justify-between items-center mb-6 border-b border-red-500/30 pb-4">
+                            <h2 className="text-2xl font-bold text-red-400"><i className="fas fa-user-shield mr-2"></i>PAPA MODUS</h2>
+                            <button onClick={closeAdmin} className="bg-slate-800 px-4 py-2 rounded text-white hover:bg-slate-700">Schließen</button>
+                        </div>
+                        
+                        <div className="bg-red-900/20 p-4 rounded-lg mb-6 text-sm text-red-200 border border-red-900/50">
+                            <i className="fas fa-info-circle mr-2"></i> Klicke auf eine Lektion, um sie als "Erledigt" oder "Offen" zu markieren.
+                        </div>
+
+                        {CURRICULUM.map(season => (
+                            <div key={season.id} className="mb-6">
+                                <h3 className={`font-bold mb-2 uppercase tracking-wider text-sm opacity-70 text-${season.color}-400`}>{season.title}</h3>
+                                <div className="grid grid-cols-1 gap-2">
+                                    {season.lessons.map(lesson => (
+                                        <button 
+                                            key={lesson.id}
+                                            onClick={() => toggleLesson(lesson.id)}
+                                            className={`p-3 rounded flex justify-between items-center border ${completed[lesson.id] ? 'bg-green-900/20 border-green-800' : 'bg-slate-800 border-slate-700'}`}
+                                        >
+                                            <span className="text-slate-300 text-left">
+                                                <span className="inline-block w-8 text-xs text-slate-500">#{lesson.id}</span>
+                                                {lesson.title}
+                                            </span>
+                                            <i className={`fas ${completed[lesson.id] ? 'fa-check-square text-green-500' : 'fa-square text-slate-600'}`}></i>
+                                        </button>
+                                    ))}
+                                    {season.lessons.length === 0 && <div className="text-slate-600 text-xs italic pl-4">Noch keine Lektionen</div>}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // Lesson Modal
+        const LessonModal = ({ lesson, onClose, onComplete, isAdmin }) => {
+            const [tab, setTab] = useState('setup');
+            const [checks, setChecks] = useState({setup: {}, steps: {}});
+            const [photo, setPhoto] = useState(null);
+
+            const allSetup = lesson.setup.every((_, i) => checks.setup[i]);
+            const allSteps = lesson.steps.every((_, i) => checks.steps[i]);
+            const canFinish = (allSetup && allSteps && (!lesson.needsPhoto || photo)) || isAdmin;
+
+            return (
+                <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="bg-slate-900 w-full max-w-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] rounded-t-2xl sm:rounded-2xl border border-slate-700 shadow-2xl flex flex-col modal-enter overflow-hidden">
+                        {/* Header */}
+                        <div className={`p-4 ${lesson.type === 'boss' ? 'bg-purple-900/50' : 'bg-slate-800'} border-b border-white/10 flex justify-between items-center shrink-0`}>
+                            <div>
+                                <span className="text-xs font-bold bg-black/30 px-2 py-1 rounded text-white/70 uppercase">Lektion {lesson.id}</span>
+                                <h2 className="text-xl font-bold text-white mt-1">{lesson.title}</h2>
+                            </div>
+                            <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20"><i className="fas fa-times"></i></button>
+                        </div>
+
+                        {/* Tabs */}
+                        <div className="flex border-b border-white/10 bg-slate-800 shrink-0">
+                            <button onClick={() => setTab('setup')} className={`flex-1 py-3 text-sm font-bold uppercase ${tab==='setup'?'text-blue-400 border-b-2 border-blue-400 bg-slate-800' : 'text-slate-400 hover:text-slate-200'}`}>Start</button>
+                            <button onClick={() => setTab('steps')} disabled={!allSetup && !isAdmin} className={`flex-1 py-3 text-sm font-bold uppercase ${tab==='steps'?'text-blue-400 border-b-2 border-blue-400 bg-slate-800':(!allSetup && !isAdmin ?'text-slate-600 cursor-not-allowed':'text-slate-400 hover:text-slate-200')}`}>Code</button>
+                            {lesson.sos && lesson.sos.length > 0 && <button onClick={() => setTab('sos')} className={`flex-1 py-3 text-sm font-bold uppercase ${tab==='sos'?'text-red-400 border-b-2 border-red-400 bg-slate-800' : 'text-slate-400 hover:text-slate-200'}`}>SOS</button>}
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-900">
+                            {tab === 'setup' && (
+                                <div className="space-y-4 animate-fade-in">
+                                    <div className="bg-blue-900/20 p-4 rounded text-blue-200 text-sm border border-blue-900/50">
+                                        <i className="fas fa-rocket mr-2"></i> Checkliste vor dem Start
+                                    </div>
+                                    {lesson.setup.map((t, i) => (
+                                        <label key={i} className="flex gap-4 p-4 rounded-xl bg-slate-800/50 border border-slate-700 cursor-pointer hover:bg-slate-800 transition">
+                                            <input type="checkbox" className="w-6 h-6 accent-green-500" checked={!!checks.setup[i]} onChange={() => setChecks(p => ({...p, setup: {...p.setup, [i]: !p.setup[i]}}))} />
+                                            <span className={checks.setup[i] ? 'text-green-400 line-through' : 'text-slate-200'}>{t}</span>
+                                        </label>
+                                    ))}
+                                    {(allSetup || isAdmin) && <button onClick={() => setTab('steps')} className="w-full py-4 bg-blue-600 text-white font-bold rounded-xl mt-4 shadow-lg hover:bg-blue-500 transition">Weiter zum Code ></button>}
+                                </div>
+                            )}
+
+                            {tab === 'steps' && (
+                                <div className="space-y-6 animate-fade-in">
+                                    <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                                        <h3 className="text-slate-400 text-xs font-bold uppercase mb-1">Ziel:</h3>
+                                        <p className="text-white text-lg">{lesson.goal}</p>
+                                    </div>
+                                    {lesson.steps.map((s, i) => (
+                                        <div key={i} className={`p-4 rounded-xl border transition-all ${checks.steps[i] ? 'bg-green-900/10 border-green-900/30 opacity-60' : 'bg-slate-800 border-slate-700'}`}>
+                                            <div className="flex gap-3">
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${checks.steps[i] ? 'bg-green-500 text-white' : 'bg-slate-700 text-slate-400'}`}>{i+1}</div>
+                                                    <input type="checkbox" className="w-6 h-6 accent-green-500" checked={!!checks.steps[i]} onChange={() => setChecks(p => ({...p, steps: {...p.steps, [i]: !p.steps[i]}}))} />
+                                                </div>
+                                                <div className="text-white flex-1">
+                                                    <HighlightCode text={s.text} />
+                                                    {s.hint && <div className="mt-2 text-sm text-slate-400 bg-black/20 p-2 rounded border-l-2 border-yellow-600"><i className="fas fa-lightbulb text-yellow-600 mr-2"></i>{s.hint}</div>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {lesson.needsPhoto && (
+                                        <div className="pt-4 border-t border-slate-700">
+                                            <h3 className="font-bold mb-3 text-white"><i className="fas fa-camera mr-2"></i>Beweisfoto</h3>
+                                            {photo ? (
+                                                <div className="relative"><img src={photo} className="w-full h-48 object-cover rounded-xl shadow-lg" /><button onClick={() => setPhoto(null)} className="absolute top-2 right-2 bg-red-600 text-white w-8 h-8 rounded-full shadow"><i className="fas fa-trash"></i></button></div>
+                                            ) : (
+                                                <label className="block w-full py-8 border-2 border-dashed border-slate-600 rounded-xl text-center cursor-pointer hover:bg-slate-800 transition hover:border-blue-500"><i className="fas fa-camera text-2xl mb-2 text-slate-400"></i><div className="text-slate-400">Foto machen</div><input type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files[0]){const r = new FileReader(); r.onload=()=>setPhoto(r.result); r.readAsDataURL(e.target.files[0]);}}} /></label>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {tab === 'sos' && (
+                                <div className="space-y-4 animate-fade-in">
+                                    <h3 className="text-red-400 font-bold mb-2">Erste Hilfe</h3>
+                                    {lesson.sos.map((item, i) => (
+                                        <div key={i} className="bg-red-900/10 border border-red-900/30 p-4 rounded-xl">
+                                            <div className="font-bold text-red-200 mb-1"><i className="fas fa-bug mr-2"></i>{item.problem}</div>
+                                            <div className="text-slate-300 pl-6 text-sm">{item.solution}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-4 border-t border-white/10 bg-slate-900 shrink-0">
+                            <button onClick={onComplete} disabled={!canFinish} className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg transition-transform ${canFinish ? 'bg-green-600 hover:bg-green-500 text-white hover:scale-[1.02]' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}>
+                                {canFinish ? <span><i className="fas fa-check-circle mr-2"></i>MISSION ABSCHLIESSEN</span> : <span><i className="fas fa-lock mr-2"></i>ERST ALLES ABHAKEN</span>}
+                            </button>
+                            {isAdmin && <div className="text-center text-xs text-red-400 mt-2 font-mono uppercase tracking-widest animate-pulse">Admin Override Active</div>}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Main App
+        const App = () => {
+            const [role, setRole] = useState(null); // 'user' or 'admin'
+            const [completed, setCompleted] = useState(() => JSON.parse(localStorage.getItem('robo_progress_v2') || '{}'));
+            const [activeLesson, setActiveLesson] = useState(null);
+            const [showAdminPanel, setShowAdminPanel] = useState(false);
+
+            useEffect(() => localStorage.setItem('robo_progress_v2', JSON.stringify(completed)), [completed]);
+
+            const finishLesson = (id) => {
+                setCompleted(p => ({...p, [id]: true}));
+                setActiveLesson(null);
+            };
+
+            const toggleAdminLesson = (id) => {
+                setCompleted(p => ({...p, [id]: !p[id]}));
+            };
+
+            if (!role) return <LoginScreen onLogin={setRole} />;
+            
+            // Wenn data.js nicht geladen ist, wird CURRICULUM undefined sein
+            if (typeof CURRICULUM === 'undefined') return <div className="text-white text-center mt-20">Fehler: Daten nicht geladen.</div>;
+
+            return (
+                <div className="min-h-screen pb-12 bg-slate-950">
+                    {/* Header */}
+                    <div className={`sticky top-0 z-30 ${role==='admin' ? 'admin-stripe' : 'bg-slate-900/90'} backdrop-blur border-b border-white/10 px-4 py-3 shadow-lg flex justify-between items-center`}>
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-900/50"><i className="fas fa-robot text-white text-xl"></i></div>
+                            <div>
+                                <div className="text-xs text-blue-400 font-bold uppercase tracking-wider">{role === 'admin' ? 'PAPA MODE' : 'AGENT JONI'}</div>
+                                <div className="text-white font-bold leading-none">Robo Academy</div>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="bg-slate-800 px-3 py-1 rounded-full border border-slate-700 text-sm font-bold text-yellow-500 shadow-inner">
+                                <i className="fas fa-star mr-2"></i>{Object.keys(completed).length * 100} XP
+                            </div>
+                            {role === 'admin' && (
+                                <button onClick={() => setShowAdminPanel(true)} className="bg-red-600 text-white px-3 py-1 rounded text-sm font-bold shadow hover:bg-red-500 transition">
+                                    <i className="fas fa-cogs"></i>
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Content Grid */}
+                    <div className="max-w-3xl mx-auto p-4 space-y-8 mt-4">
+                        {CURRICULUM.map((season, sIdx) => (
+                            <div key={season.id} className="relative">
+                                {/* Season Header */}
+                                <div className="flex items-center gap-4 mb-4 pl-2">
+                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl bg-${season.color}-600/20 text-${season.color}-400 border border-${season.color}-500/50 shadow-lg shadow-${season.color}-900/20`}>
+                                        <i className={`fas ${season.icon}`}></i>
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-white tracking-tight">{season.title}</h2>
+                                        <p className="text-slate-400 text-sm">{season.description}</p>
+                                    </div>
+                                </div>
+
+                                {/* Lesson List */}
+                                <div className="space-y-3 pl-8 border-l-2 border-slate-800 ml-6">
+                                    {season.lessons.map((lesson, lIdx) => {
+                                        const isDone = completed[lesson.id];
+                                        // Lock Logic: 
+                                        // 1. Gesperrt wenn vorherige Lektion in DIESER Season nicht fertig
+                                        // 2. Admin ignoriert alles
+                                        let isLocked = false;
+                                        if (lIdx > 0 && !completed[season.lessons[lIdx-1].id]) isLocked = true;
+                                        
+                                        // Season Lock: Erste Lektion einer Season ist gesperrt, wenn letzte Lektion der Vor-Season nicht fertig?
+                                        // Optional: Hier erstmal deaktiviert für einfacheren Einstieg.
+                                        
+                                        if (role === 'admin') isLocked = false;
+
+                                        return (
+                                            <button 
+                                                key={lesson.id} 
+                                                disabled={isLocked}
+                                                onClick={() => setActiveLesson(lesson)}
+                                                className={`w-full text-left relative group transition-all duration-300 transform ${isLocked ? 'opacity-40 grayscale cursor-not-allowed' : 'hover:scale-[1.01] cursor-pointer'}`}
+                                            >
+                                                {/* Status Dot */}
+                                                <div className={`absolute -left-[41px] top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-4 border-slate-900 z-10 shadow-lg ${isDone ? 'bg-green-500' : isLocked ? 'bg-slate-700' : 'bg-blue-500 animate-pulse'}`}></div>
+                                                
+                                                {/* Card */}
+                                                <div className={`p-4 rounded-xl border flex justify-between items-center shadow-lg ${isDone ? 'bg-gradient-to-r from-green-900/20 to-slate-900 border-green-900/50' : 'bg-slate-800 border-slate-700'}`}>
+                                                    <div>
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${isDone ? 'bg-green-900 text-green-400' : 'bg-slate-900 text-slate-500'}`}>Lektion {lesson.id}</span>
+                                                            {lesson.type === 'boss' && <span className="text-purple-400 text-[10px] border border-purple-500/30 px-1 rounded animate-pulse">BOSS</span>}
+                                                            {lesson.type === 'challenge' && <span className="text-yellow-400 text-[10px] border border-yellow-500/30 px-1 rounded">CHALLENGE</span>}
+                                                        </div>
+                                                        <h3 className={`font-bold text-lg ${isDone ? 'text-green-400' : 'text-white'}`}>{lesson.title}</h3>
+                                                    </div>
+                                                    <i className={`fas ${isDone ? 'fa-check-circle text-green-500' : isLocked ? 'fa-lock text-slate-600' : 'fa-play-circle text-blue-400 text-2xl group-hover:text-white transition'}`}></i>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                    {season.lessons.length === 0 && (
+                                        <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/50 text-slate-600 italic text-sm">
+                                            Inhalte kommen bald...
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Modals */}
+                    {activeLesson && (
+                        <LessonModal 
+                            lesson={activeLesson} 
+                            onClose={() => setActiveLesson(null)} 
+                            onComplete={() => finishLesson(activeLesson.id)}
+                            isAdmin={role === 'admin'}
+                        />
+                    )}
+
+                    {showAdminPanel && (
+                        <AdminPanel 
+                            completed={completed} 
+                            toggleLesson={toggleAdminLesson} 
+                            closeAdmin={() => setShowAdminPanel(false)} 
+                        />
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
