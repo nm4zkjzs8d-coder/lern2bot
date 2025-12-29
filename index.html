@@ -42,13 +42,82 @@
             80% { transform: translate(-50%, -150%) scale(1); opacity: 1; }
             100% { transform: translate(-50%, -200%) scale(0.8); opacity: 0; } 
         }
-        .anim-xp-burst { animation: floatUp 2s ease-out forwards; pointer-events: none; position: fixed; top: 50%; left: 50%; }
+        .anim-xp-burst { animation: floatUp 2s ease-out forwards; pointer-events: none; position: fixed; top: 50%; left: 50%; z-index: 9999; }
 
-        @keyframes mascotSlide { 0% { transform: translateY(100%) rotate(-10deg); } 100% { transform: translateY(0) rotate(0deg); } }
-        .anim-mascot-in { animation: mascotSlide 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .anim-slide-right { animation: slideInRight 0.5s ease-out; }
+
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        .anim-bounce { animation: bounce 1s ease-in-out infinite; }
+
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        .anim-shake { animation: shake 0.5s ease-in-out; }
+
+        @keyframes glow { 0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); } 50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 30px rgba(59, 130, 246, 0.6); } }
+        .anim-glow { animation: glow 2s ease-in-out infinite; }
+
         @keyframes rays { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .anim-rays { animation: rays 20s linear infinite; }
+
+        @keyframes flipCard { 
+            0% { transform: rotateY(0deg) scale(1); }
+            50% { transform: rotateY(90deg) scale(1.1); }
+            100% { transform: rotateY(0deg) scale(1); }
+        }
+        .anim-flip { animation: flipCard 0.8s ease-in-out; }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+            50% { opacity: 1; transform: scale(1) rotate(180deg); }
+        }
+        .sparkle { position: absolute; width: 8px; height: 8px; background: radial-gradient(circle, #fff 0%, #fbbf24 50%, transparent 70%); border-radius: 50%; pointer-events: none; animation: sparkle 1s ease-out forwards; }
+
+        @keyframes comboSlide { 
+            0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(5deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        .anim-combo { animation: comboSlide 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .anim-pulse { animation: pulse 2s ease-in-out infinite; }
+
+        @keyframes levelUpExplosion {
+            0% { transform: scale(0); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.8; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+        .level-up-ring { position: absolute; top: 50%; left: 50%; width: 200px; height: 200px; border: 4px solid #fbbf24; border-radius: 50%; transform: translate(-50%, -50%) scale(0); animation: levelUpExplosion 1s ease-out forwards; pointer-events: none; }
+
+        /* Progress Ring */
+        .progress-ring { transform: rotate(-90deg); }
+        .progress-ring__circle { transition: stroke-dashoffset 0.5s ease; }
+
+        /* Mascot animations */
+        @keyframes mascotBounce { 0%, 100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-10px) rotate(5deg); } }
+        .mascot-bounce { animation: mascotBounce 2s ease-in-out infinite; }
+
+        @keyframes mascotExcited { 0%, 100% { transform: scale(1) rotate(0deg); } 25% { transform: scale(1.1) rotate(-10deg); } 75% { transform: scale(1.1) rotate(10deg); } }
+        .mascot-excited { animation: mascotExcited 0.6s ease-in-out 3; }
+
+        /* Card rarity frames */
+        .card-common { box-shadow: 0 0 20px rgba(34, 197, 94, 0.5); }
+        .card-rare { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+        .card-epic { box-shadow: 0 0 20px rgba(168, 85, 247, 0.5); }
+        .card-legendary { box-shadow: 0 0 30px rgba(251, 191, 36, 0.8), 0 0 60px rgba(251, 191, 36, 0.4); animation: glow 2s ease-in-out infinite; }
+
+        /* Achievement notification */
+        @keyframes achievementSlide { 
+            0% { transform: translateX(400px); }
+            10% { transform: translateX(0); }
+            90% { transform: translateX(0); }
+            100% { transform: translateX(400px); }
+        }
+        .achievement-notify { animation: achievementSlide 4s ease-in-out forwards; }
+
+        /* Boss healthbar */
+        @keyframes bossHealthDrain { from { width: 100%; } to { width: 0%; } }
+        .boss-health { animation: bossHealthDrain 0.5s ease-out forwards; }
     </style>
 </head>
 <body>
@@ -58,45 +127,59 @@
         const { useState, useEffect, useRef } = React;
         const ADMIN_PASS = "papa";
 
-        // --- KONFIGURATION BILDER ---
-        const MASCOT_IMAGE = "images/mascot.png"; 
-        const LOGO_IMAGE = "images/logo.png"; 
-        
+        // --- RANK SYSTEM ---
         const RANKS = [
-            { xp: 0, title: "Robo-Novize", icon: "fa-baby-carriage", color: "slate" },
-            { xp: 1000, title: "Tech-Schüler", icon: "fa-book-reader", color: "blue" },
-            { xp: 3000, title: "Code-Bastler", icon: "fa-wrench", color: "green" },
-            { xp: 6000, title: "Mecha-Ingenieur", icon: "fa-cogs", color: "purple" },
-            { xp: 10000, title: "Grandmaster", icon: "fa-crown", color: "yellow" }
+            { xp: 0, title: "Robo-Novize", icon: "fa-baby-carriage", color: "#64748b", badge: "images/rank_badge_1.png" },
+            { xp: 1000, title: "Tech-Schüler", icon: "fa-book-reader", color: "#3b82f6", badge: "images/rank_badge_2.png" },
+            { xp: 3000, title: "Code-Bastler", icon: "fa-wrench", color: "#22c55e", badge: "images/rank_badge_3.png" },
+            { xp: 6000, title: "Mecha-Ingenieur", icon: "fa-cogs", color: "#a855f7", badge: "images/rank_badge_4.png" },
+            { xp: 10000, title: "Cyber-Grandmaster", icon: "fa-crown", color: "#fbbf24", badge: "images/rank_badge_5.png" }
         ];
 
-        // --- TRADING CARDS DATABASE ---
+        // --- ACHIEVEMENTS ---
+        const ACHIEVEMENTS = {
+            first_steps: { id: "first_steps", name: "Erste Schritte", desc: "Erstes Level abgeschlossen", icon: "fa-shoe-prints", badge: "images/badge_rookie.png" },
+            speed_demon: { id: "speed_demon", name: "Speedrunner", desc: "5 Levels an einem Tag", icon: "fa-bolt", badge: "images/badge_speedrun.png" },
+            perfectionist: { id: "perfectionist", name: "Perfektionist", desc: "Quiz mit 100% bestanden", icon: "fa-star", badge: "images/badge_perfect.png" },
+            card_collector_10: { id: "card_collector_10", name: "Sammler", desc: "10 Karten gesammelt", icon: "fa-layer-group", badge: "images/badge_collector.png" },
+            card_collector_25: { id: "card_collector_25", name: "Meister-Sammler", desc: "Alle 25 Karten gesammelt", icon: "fa-trophy", badge: "images/badge_master.png" },
+            boss_slayer: { id: "boss_slayer", name: "Boss-Bezwinger", desc: "Alle Boss-Levels geschafft", icon: "fa-dragon", badge: "images/badge_boss.png" },
+            quiz_master: { id: "quiz_master", name: "Quiz-König", desc: "Alle Quizze bestanden", icon: "fa-graduation-cap", badge: "images/badge_quiz.png" }
+        };
+
+        // --- DAILY CHALLENGES ---
+        const DAILY_CHALLENGES = [
+            { id: "complete_3", text: "Schließe 3 Levels ab", target: 3, type: "lessons", reward: 200 },
+            { id: "collect_2", text: "Sammle 2 neue Karten", target: 2, type: "cards", reward: 150 },
+            { id: "pass_quiz", text: "Bestehe ein Quiz", target: 1, type: "quizzes", reward: 300 }
+        ];
+
         const TRADING_CARDS = {
-            "c1": { id: "c1", name: "mBot Neo Alpha", image: "images/card_c1.png" },
-            "c2": { id: "c2", name: "Cyber Core", image: "images/card_c2.png" },
-            "c3": { id: "c3", name: "Pixel Mask", image: "images/card_c3.png" },
-            "c4": { id: "c4", name: "Sonic Blast", image: "images/card_c4.png" },
-            "c5": { id: "c5", name: "Controller Link", image: "images/card_c5.png" },
-            "c6": { id: "c6", name: "Turbo Drive", image: "images/card_c6.png" },
-            "c7": { id: "c7", name: "Drift Wheel", image: "images/card_c7.png" },
-            "c8": { id: "c8", name: "Chassis Armor", image: "images/card_c8.png" },
-            "c9": { id: "c9", name: "Echo Bat", image: "images/card_c9.png" },
-            "c10": { id: "c10", name: "Phantom Wall", image: "images/card_c10.png" },
-            "c11": { id: "c11", name: "Spectrum Eye", image: "images/card_c11.png" },
-            "c12": { id: "c12", name: "Pathfinder", image: "images/card_c12.png" },
-            "c13": { id: "c13", name: "Chameleon", image: "images/card_c13.png" },
-            "c14": { id: "c14", name: "Titan Claw", image: "images/card_c14.png" },
-            "c15": { id: "c15", name: "Servo Muscle", image: "images/card_c15.png" },
-            "c16": { id: "c16", name: "Heavy Lifter", image: "images/card_c16.png" },
-            "c17": { id: "c17", name: "Gyro Compass", image: "images/card_c17.png" },
-            "c18": { id: "c18", name: "Seismic Sense", image: "images/card_c18.png" },
-            "c19": { id: "c19", name: "Vocal Receptor", image: "images/card_c19.png" },
-            "c20": { id: "c20", name: "Solar Flare", image: "images/card_c20.png" },
-            "c21": { id: "c21", name: "Memory Bank", image: "images/card_c21.png" },
-            "c22": { id: "c22", name: "Time Loop", image: "images/card_c22.png" },
-            "c23": { id: "c23", name: "Signal Beacon", image: "images/card_c23.png" },
-            "c24": { id: "c24", name: "Rescue Unit", image: "images/card_c24.png" },
-            "c25": { id: "c25", name: "Galaxy Explorer", image: "images/card_c25.png" }
+            "c1": { id: "c1", name: "mBot Neo Alpha", image: "images/card_c1.png", rarity: "common" },
+            "c2": { id: "c2", name: "Cyber Core", image: "images/card_c2.png", rarity: "common" },
+            "c3": { id: "c3", name: "Pixel Mask", image: "images/card_c3.png", rarity: "common" },
+            "c4": { id: "c4", name: "Sonic Blast", image: "images/card_c4.png", rarity: "common" },
+            "c5": { id: "c5", name: "Controller Link", image: "images/card_c5.png", rarity: "common" },
+            "c6": { id: "c6", name: "Turbo Drive", image: "images/card_c6.png", rarity: "rare" },
+            "c7": { id: "c7", name: "Drift Wheel", image: "images/card_c7.png", rarity: "rare" },
+            "c8": { id: "c8", name: "Chassis Armor", image: "images/card_c8.png", rarity: "rare" },
+            "c9": { id: "c9", name: "Echo Bat", image: "images/card_c9.png", rarity: "rare" },
+            "c10": { id: "c10", name: "Phantom Wall", image: "images/card_c10.png", rarity: "rare" },
+            "c11": { id: "c11", name: "Spectrum Eye", image: "images/card_c11.png", rarity: "epic" },
+            "c12": { id: "c12", name: "Pathfinder", image: "images/card_c12.png", rarity: "epic" },
+            "c13": { id: "c13", name: "Chameleon", image: "images/card_c13.png", rarity: "epic" },
+            "c14": { id: "c14", name: "Titan Claw", image: "images/card_c14.png", rarity: "epic" },
+            "c15": { id: "c15", name: "Servo Muscle", image: "images/card_c15.png", rarity: "epic" },
+            "c16": { id: "c16", name: "Heavy Lifter", image: "images/card_c16.png", rarity: "epic" },
+            "c17": { id: "c17", name: "Gyro Compass", image: "images/card_c17.png", rarity: "epic" },
+            "c18": { id: "c18", name: "Seismic Sense", image: "images/card_c18.png", rarity: "epic" },
+            "c19": { id: "c19", name: "Vocal Receptor", image: "images/card_c19.png", rarity: "legendary" },
+            "c20": { id: "c20", name: "Solar Flare", image: "images/card_c20.png", rarity: "legendary" },
+            "c21": { id: "c21", name: "Memory Bank", image: "images/card_c21.png", rarity: "legendary" },
+            "c22": { id: "c22", name: "Time Loop", image: "images/card_c22.png", rarity: "legendary" },
+            "c23": { id: "c23", name: "Signal Beacon", image: "images/card_c23.png", rarity: "legendary" },
+            "c24": { id: "c24", name: "Rescue Unit", image: "images/card_c24.png", rarity: "legendary" },
+            "c25": { id: "c25", name: "Galaxy Explorer", image: "images/card_c25.png", rarity: "legendary" }
         };
 
         const REWARD_MAP = {
@@ -111,43 +194,46 @@
             90: "c24", 100: "c25"
         };
 
-        // --- ERROR BOUNDARY ---
-        class ErrorBoundary extends React.Component {
-            constructor(props) {
-                super(props);
-                this.state = { hasError: false, error: null };
-            }
-            static getDerivedStateFromError(error) { return { hasError: true, error }; }
-            componentDidCatch(error, errorInfo) { console.error("Crash:", error, errorInfo); }
-            resetSystem = () => {
-                if(confirm("ACHTUNG: Dies löscht ALLE Daten um die App zu reparieren. Sicher?")) {
-                    localStorage.removeItem('robo_db_v2');
-                    window.location.reload();
-                }
-            }
-            render() {
-                if (this.state.hasError) {
-                    return (
-                        <div className="min-h-screen flex flex-col items-center justify-center bg-slate-900 text-white p-8 text-center font-sans">
-                            <div className="text-6xl mb-4 animate-bounce">🤖💥</div>
-                            <h1 className="text-3xl font-black text-red-400 mb-4">Systemfehler!</h1>
-                            <p className="mb-8 text-slate-300">Der Roboter ist gestolpert. Das passiert manchmal bei Updates.<br/>Keine Panik!</p>
-                            <div className="bg-slate-800 p-4 rounded text-xs text-left mb-8 font-mono text-red-300 max-w-lg w-full border border-red-900 overflow-auto max-h-32">
-                                {this.state.error && this.state.error.toString()}
-                            </div>
-                            <button onClick={this.resetSystem} className="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg border-b-4 border-red-700 active:border-b-0 active:translate-y-1 transition-all">
-                                <i className="fas fa-wrench mr-2"></i> System Reparieren (Reset)
-                            </button>
-                        </div>
-                    );
-                }
-                return this.props.children;
-            }
-        }
+        // MASCOT MESSAGES
+        const MASCOT_MESSAGES = {
+            idle: ["Bereit für Action?", "Let's code!", "Auf geht's!"],
+            happy: ["Super gemacht! 🎉", "Du rockst! 🚀", "Weiter so! ⭐"],
+            excited: ["WOW! Legendär! 🔥", "Unglaublich! 💫", "Du bist ein Profi! 👑"],
+            sad: ["Nicht aufgeben! 💪", "Versuch's nochmal!", "Du schaffst das! 🌟"]
+        };
 
         // --- HELPER FUNCTIONS ---
         const getCurrentRank = (xp) => [...RANKS].reverse().find(r => xp >= r.xp) || RANKS[0];
         const getNextRank = (xp) => RANKS.find(r => r.xp > xp) || null;
+        
+        const getCardRarityClass = (rarity) => {
+            const map = { common: 'card-common', rare: 'card-rare', epic: 'card-epic', legendary: 'card-legendary' };
+            return map[rarity] || '';
+        };
+
+        const triggerConfetti = () => { 
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                setTimeout(() => confetti({ particleCount: 100, angle: 60, spread: 55, origin: { x: 0 } }), 200);
+                setTimeout(() => confetti({ particleCount: 100, angle: 120, spread: 55, origin: { x: 1 } }), 400);
+            }
+        };
+
+        const createSparkles = (x, y, container) => {
+            for(let i = 0; i < 12; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                sparkle.style.left = `${x}px`;
+                sparkle.style.top = `${y}px`;
+                sparkle.style.animationDelay = `${i * 0.05}s`;
+                const angle = (i / 12) * Math.PI * 2;
+                const distance = 50 + Math.random() * 50;
+                sparkle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+                sparkle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+                container.appendChild(sparkle);
+                setTimeout(() => sparkle.remove(), 1000);
+            }
+        };
 
         const useCountUp = (end, duration = 1000) => {
             const [count, setCount] = useState(end);
@@ -170,9 +256,8 @@
             return count;
         };
 
-        const triggerConfetti = () => { if (typeof confetti === 'function') confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } }); };
-
         const HighlightCode = ({ text }) => {
+            if (typeof text !== 'string') return <span>{text}</span>;
             const parts = text.split(/('.*?')/g);
             return (
                 <span>
@@ -193,7 +278,124 @@
             );
         };
 
-        const TradingCard = ({ cardId, isLocked, onClick, size = "normal" }) => {
+        // --- COMPONENTS ---
+
+        const XPFloater = ({ amount, isCombo, comboCount }) => {
+            if(!amount) return null;
+            return (
+                <div className="anim-xp-burst flex flex-col items-center justify-center">
+                    {isCombo && <div className="text-5xl font-black text-red-500 drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)] mb-2 anim-combo">COMBO x{comboCount}!</div>}
+                    <div className="text-7xl font-black text-yellow-400 drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)] tracking-tighter">+{amount}</div>
+                    <div className="text-2xl font-bold text-white uppercase tracking-widest mt-2 bg-yellow-500/80 px-4 py-1 rounded-full backdrop-blur-sm">XP</div>
+                </div>
+            );
+        };
+
+        const RankUpModal = ({ rank, onClose }) => {
+            useEffect(() => { triggerConfetti(); }, []);
+            return (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 backdrop-blur overflow-hidden" onClick={onClose}>
+                    <div className="absolute inset-0 flex items-center justify-center opacity-30"><div className="w-[200vw] h-[200vw] bg-[conic-gradient(from_0deg,transparent_0deg,white_10deg,transparent_20deg)] anim-rays rounded-full"></div></div>
+                    <div className="level-up-ring"></div>
+                    <div className="level-up-ring" style={{animationDelay: '0.2s'}}></div>
+                    <div className="relative z-10 text-center anim-pop p-8 max-w-lg w-full">
+                        <h2 className="text-6xl font-black text-yellow-400 mb-4 drop-shadow-lg uppercase italic transform -rotate-3">LEVEL UP!</h2>
+                        <div className="bg-white/10 backdrop-blur-md border-4 border-white/30 rounded-3xl p-8 mb-8 relative shadow-[0_0_50px_rgba(255,255,255,0.2)]">
+                            <div className="relative inline-block">
+                                <img src={rank.badge} className="w-32 h-32 mx-auto mb-4 anim-bounce" onError={(e) => e.target.style.display='none'} alt={rank.title} />
+                                <div className="absolute inset-0 rounded-full animate-ping opacity-25" style={{backgroundColor: rank.color}}></div>
+                            </div>
+                            <h3 className="text-4xl font-black text-white mb-2">{rank.title}</h3>
+                            <p className="text-blue-200 font-bold text-lg">Du bist jetzt ein echter Profi!</p>
+                        </div>
+                        <p className="text-white/70 text-sm animate-pulse mt-8">Tippen zum Fortfahren</p>
+                    </div>
+                </div>
+            );
+        };
+
+        const AchievementNotification = ({ achievement, onClose }) => {
+            useEffect(() => {
+                const timer = setTimeout(onClose, 4000);
+                return () => clearTimeout(timer);
+            }, []);
+
+            return (
+                <div className="fixed top-20 right-4 z-[90] achievement-notify">
+                    <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-2xl shadow-2xl flex items-center gap-4 border-2 border-white/20 backdrop-blur">
+                        <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+                            <img src={achievement.badge} className="w-12 h-12" onError={(e) => {e.target.style.display='none'; e.target.parentElement.innerHTML = `<i class="fas ${achievement.icon} text-3xl"></i>`;}} alt={achievement.name} />
+                        </div>
+                        <div>
+                            <div className="text-xs font-black uppercase tracking-wider text-yellow-300">Achievement Freigeschaltet!</div>
+                            <h3 className="text-lg font-black">{achievement.name}</h3>
+                            <p className="text-sm text-white/80">{achievement.desc}</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ProgressRing = ({ progress, size = 60 }) => {
+            const strokeWidth = 4;
+            const radius = (size - strokeWidth) / 2;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (progress / 100) * circumference;
+
+            return (
+                <svg width={size} height={size} className="progress-ring">
+                    <circle stroke="#e2e8f0" strokeWidth={strokeWidth} fill="transparent" r={radius} cx={size/2} cy={size/2} />
+                    <circle className="progress-ring__circle" stroke="#3b82f6" strokeWidth={strokeWidth} fill="transparent" r={radius} cx={size/2} cy={size/2} strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" />
+                </svg>
+            );
+        };
+
+        const RoboMascot = ({ mood = 'idle', onClick }) => {
+            const [message, setMessage] = useState('');
+            const [showMessage, setShowMessage] = useState(false);
+            
+            const mascotImages = {
+                idle: 'images/robo_idle.png',
+                happy: 'images/robo_happy.png',
+                excited: 'images/robo_excited.png',
+                sad: 'images/robo_sleepy.png'
+            };
+
+            useEffect(() => {
+                const messages = MASCOT_MESSAGES[mood] || MASCOT_MESSAGES.idle;
+                setMessage(messages[Math.floor(Math.random() * messages.length)]);
+            }, [mood]);
+
+            const handleClick = () => {
+                setShowMessage(true);
+                setTimeout(() => setShowMessage(false), 3000);
+                if(onClick) onClick();
+            };
+
+            return (
+                <div className="fixed bottom-4 right-4 z-50 cursor-pointer" onClick={handleClick}>
+                    {showMessage && (
+                        <div className="absolute bottom-full right-0 mb-2 bg-white text-slate-800 px-4 py-2 rounded-xl shadow-lg font-bold text-sm whitespace-nowrap anim-pop">
+                            {message}
+                            <div className="absolute bottom-0 right-4 w-3 h-3 bg-white transform translate-y-1/2 rotate-45"></div>
+                        </div>
+                    )}
+                    <div className={`w-24 h-24 relative ${mood === 'excited' ? 'mascot-excited' : 'mascot-bounce'}`}>
+                        <img 
+                            src={mascotImages[mood]} 
+                            className="w-full h-full object-contain drop-shadow-2xl" 
+                            onError={(e) => {
+                                e.target.style.display='none';
+                                e.target.parentElement.innerHTML = '<div class="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center text-white text-4xl"><i class="fas fa-robot"></i></div>';
+                            }} 
+                            alt="Robo Buddy" 
+                        />
+                    </div>
+                </div>
+            );
+        };
+
+        const TradingCard = ({ cardId, isLocked, onClick, size = "normal", showRarity = false }) => {
             const card = TRADING_CARDS[cardId];
             if (!card && !isLocked) return null;
             const sizeClasses = size === "large" ? "w-72 sm:w-80" : "w-36 sm:w-40";
@@ -204,47 +406,64 @@
                         <i className="fas fa-lock text-4xl text-slate-400 mb-2"></i>
                         <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">Gesperrt</span>
                         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
-                        <div className="absolute bottom-2 text-[10px] text-slate-400">Card #{cardId.substring(1)}</div>
+                        <div className="absolute bottom-2 text-[10px] text-slate-400">Card #{cardId?.substring(1)}</div>
                     </div>
                 );
             }
 
+            const rarityColors = {
+                common: 'bg-green-500',
+                rare: 'bg-blue-500', 
+                epic: 'bg-purple-500',
+                legendary: 'bg-yellow-500'
+            };
+
             return (
-                <div onClick={onClick} className={`${sizeClasses} aspect-card rounded-xl shadow-xl cursor-pointer transition-all duration-300 card-hover relative group overflow-hidden bg-slate-800`}>
+                <div onClick={onClick} className={`${sizeClasses} aspect-card rounded-xl shadow-xl cursor-pointer transition-all duration-300 card-hover relative group overflow-hidden bg-slate-800 ${getCardRarityClass(card.rarity)}`}>
                     <img 
                         src={card.image} 
                         alt={card.name}
                         className="w-full h-full object-contain"
                         onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/750x1050/e2e8f0/64748b?text=Bild+fehlt'; }}
                     />
-                </div>
-            );
-        };
-
-        const XPFloater = ({ amount }) => {
-            if (!amount) return null;
-            return (
-                <div className="anim-xp-burst flex flex-col items-center justify-center z-[100]">
-                    <div className="text-7xl font-black text-yellow-400 drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)] tracking-tighter">+{amount}</div>
-                    <div className="text-2xl font-bold text-white uppercase tracking-widest mt-2 bg-yellow-500/80 px-4 py-1 rounded-full backdrop-blur-sm">Erfahrung</div>
-                </div>
-            );
-        };
-
-        const RankUpModal = ({ rank, onClose }) => {
-            useEffect(() => { triggerConfetti(); }, []);
-            return (
-                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 backdrop-blur overflow-hidden" onClick={onClose}>
-                    <div className="absolute inset-0 flex items-center justify-center opacity-30"><div className="w-[200vw] h-[200vw] bg-[conic-gradient(from_0deg,transparent_0deg,white_10deg,transparent_20deg)] anim-rays rounded-full"></div></div>
-                    <div className="relative z-10 text-center anim-pop p-8 max-w-lg w-full">
-                        <h2 className="text-6xl font-black text-yellow-400 mb-4 drop-shadow-lg uppercase italic transform -rotate-3">LEVEL UP!</h2>
-                        <div className="bg-white/10 backdrop-blur-md border-4 border-white/30 rounded-3xl p-8 mb-8 relative shadow-[0_0_50px_rgba(255,255,255,0.2)]">
-                            <div className={`w-32 h-32 mx-auto rounded-full bg-${rank.color}-500 flex items-center justify-center text-6xl text-white shadow-2xl mb-4 border-4 border-white ring-4 ring-${rank.color}-300`}><i className={`fas ${rank.icon}`}></i></div>
-                            <h3 className="text-4xl font-black text-white mb-2">{rank.title}</h3>
-                            <p className="text-blue-200 font-bold text-lg">Du bist jetzt ein echter Profi!</p>
+                    {showRarity && (
+                        <div className={`absolute top-2 right-2 ${rarityColors[card.rarity]} text-white text-xs font-black px-2 py-1 rounded-full uppercase`}>
+                            {card.rarity}
                         </div>
-                        <div className="absolute -bottom-24 -right-12 w-56 anim-mascot-in transform rotate-6 hover:scale-110 transition-transform cursor-pointer" onClick={triggerConfetti}><img src={MASCOT_IMAGE} className="w-full drop-shadow-2xl" onError={(e) => e.target.style.display='none'} /></div>
-                        <p className="text-white/70 text-sm animate-pulse mt-8">Tippen zum Fortfahren</p>
+                    )}
+                </div>
+            );
+        };
+
+        const CardUnlockModal = ({ cardId, onClose }) => {
+            const card = TRADING_CARDS[cardId];
+            const [showFront, setShowFront] = useState(false);
+
+            useEffect(() => {
+                triggerConfetti();
+                setTimeout(() => setShowFront(true), 500);
+            }, []);
+
+            if(!card) return null;
+
+            return (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/90 backdrop-blur anim-pop" onClick={onClose}>
+                    <div className="text-center">
+                        <h2 className="text-5xl font-black text-yellow-400 mb-2 anim-bounce">NEUE KARTE!</h2>
+                        <div className="text-xl font-bold text-white mb-6 uppercase tracking-wider">{card.rarity} Karte erhalten!</div>
+                        <div className="relative inline-block">
+                            {!showFront ? (
+                                <div className="w-72 sm:w-80 aspect-card bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-2xl">
+                                    <img src="images/card_back.png" className="w-full h-full object-cover rounded-xl" onError={(e) => {e.target.parentElement.innerHTML = '<i class="fas fa-question text-9xl text-white"></i>';}} alt="Card Back" />
+                                </div>
+                            ) : (
+                                <div className="anim-flip">
+                                    <TradingCard cardId={cardId} isLocked={false} size="large" showRarity={true} />
+                                </div>
+                            )}
+                        </div>
+                        {showFront && <h3 className="text-2xl font-black text-white mt-4">{card.name}</h3>}
+                        <p className="text-white/70 text-sm mt-6 animate-pulse">Tippe irgendwo zum Fortfahren</p>
                     </div>
                 </div>
             );
@@ -261,46 +480,97 @@
                 setSelectedOption(index);
                 const correct = index === quiz.questions[currentQ].correct;
                 if (correct) setScore(score + 1);
+
                 setTimeout(() => {
-                    if (currentQ < quiz.questions.length - 1) { setCurrentQ(currentQ + 1); setSelectedOption(null); } 
-                    else { setShowResult(true); if (score + (correct ? 1 : 0) >= Math.ceil(quiz.questions.length * 0.7)) triggerConfetti(); }
+                    if (currentQ < quiz.questions.length - 1) {
+                        setCurrentQ(currentQ + 1);
+                        setSelectedOption(null);
+                    } else {
+                        setShowResult(true);
+                    }
                 }, 1500);
             };
 
             if (showResult) {
                 const passed = score >= Math.ceil(quiz.questions.length * 0.7);
+                const isPerfect = score === quiz.questions.length;
+                
+                useEffect(() => {
+                    if(passed) triggerConfetti();
+                }, []);
+
                 return (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur p-4 anim-pop">
-                        <div className="bg-white p-8 rounded-3xl max-w-md w-full text-center relative overflow-hidden">
-                            <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 ${passed ? 'bg-green-100 text-green-500' : 'bg-red-100 text-red-500'}`}><i className={`fas ${passed ? 'fa-trophy' : 'fa-times'} text-5xl`}></i></div>
-                            <h2 className="text-3xl font-black text-slate-800 mb-2">{passed ? "Prüfung bestanden!" : "Leider durchgefallen"}</h2>
+                        <div className="bg-white p-8 rounded-3xl max-w-md w-full text-center">
+                            <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 ${passed ? 'bg-green-100 text-green-500' : 'bg-red-100 text-red-500'}`}>
+                                <i className={`fas ${passed ? 'fa-trophy' : 'fa-times'} text-5xl`}></i>
+                            </div>
+                            <h2 className="text-3xl font-black text-slate-800 mb-2">{passed ? (isPerfect ? "PERFEKT! 🎉" : "Prüfung bestanden!") : "Leider durchgefallen"}</h2>
                             <p className="text-slate-500 mb-6 font-bold">{score} von {quiz.questions.length} Fragen richtig.</p>
-                            {passed && (<div className="absolute bottom-0 right-0 w-32 anim-mascot-in opacity-50"><img src={MASCOT_IMAGE} onError={(e)=>e.target.style.display='none'} /></div>)}
-                            <button onClick={() => onFinish(passed, score)} className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white font-black rounded-xl shadow-lg btn-bounce relative z-10">{passed ? "Urkunde abholen" : "Nochmal versuchen"}</button>
+                            {isPerfect && <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-3 mb-4"><p className="text-yellow-700 font-bold text-sm">🌟 Perfekte Punktzahl! Achievement freigeschaltet!</p></div>}
+                            <button onClick={() => onFinish(passed, score, isPerfect)} className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white font-black rounded-xl shadow-lg btn-bounce">
+                                {passed ? "Urkunde abholen" : "Nochmal versuchen"}
+                            </button>
                         </div>
                     </div>
                 );
             }
+
             const q = quiz.questions[currentQ];
+
             return (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/95 backdrop-blur p-4">
                     <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[80vh] anim-pop">
-                        <div className="p-6 bg-slate-800 text-white flex justify-between items-center"><div><span className="text-xs font-black uppercase text-blue-400 tracking-wider">Quiz: {quiz.title}</span><div className="text-sm font-bold text-slate-400">Frage {currentQ + 1} von {quiz.questions.length}</div></div><button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center"><i className="fas fa-times"></i></button></div>
-                        <div className="flex-1 p-8 flex flex-col justify-center bg-slate-50"><h2 className="text-2xl font-black text-slate-800 mb-8 text-center leading-tight">{q.q}</h2><div className="space-y-4">{q.options.map((opt, idx) => { let btnClass = "bg-white border-2 border-slate-200 text-slate-600 hover:border-blue-400 hover:text-blue-600"; if (selectedOption !== null) { if (idx === q.correct) btnClass = "bg-green-500 border-green-500 text-white"; else if (idx === selectedOption) btnClass = "bg-red-500 border-red-500 text-white"; else btnClass = "bg-slate-100 border-slate-200 text-slate-400 opacity-50"; } return <button key={idx} onClick={() => handleAnswer(idx)} disabled={selectedOption !== null} className={`w-full p-5 rounded-2xl font-bold text-lg text-left transition-all duration-200 shadow-sm ${btnClass}`}><span className="inline-block w-8 font-black opacity-50">{String.fromCharCode(65+idx)}.</span> {opt}</button>; })}</div></div>
-                        <div className="h-2 bg-slate-200 w-full"><div className="h-full bg-blue-500 transition-all duration-500" style={{width: `${((currentQ) / quiz.questions.length) * 100}%`}}></div></div>
+                        <div className="p-6 bg-slate-800 text-white flex justify-between items-center">
+                            <div>
+                                <span className="text-xs font-black uppercase text-blue-400 tracking-wider">Quiz: {quiz.title}</span>
+                                <div className="text-sm font-bold text-slate-400">Frage {currentQ + 1} von {quiz.questions.length}</div>
+                            </div>
+                            <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center"><i className="fas fa-times"></i></button>
+                        </div>
+                        
+                        <div className="flex-1 p-8 flex flex-col justify-center bg-slate-50">
+                            <h2 className="text-2xl font-black text-slate-800 mb-8 text-center leading-tight">{q.q}</h2>
+                            <div className="space-y-4">
+                                {q.options.map((opt, idx) => {
+                                    let btnClass = "bg-white border-2 border-slate-200 text-slate-600 hover:border-blue-400 hover:text-blue-600";
+                                    if (selectedOption !== null) {
+                                        if (idx === q.correct) btnClass = "bg-green-500 border-green-500 text-white";
+                                        else if (idx === selectedOption) btnClass = "bg-red-500 border-red-500 text-white";
+                                        else btnClass = "bg-slate-100 border-slate-200 text-slate-400 opacity-50";
+                                    }
+                                    return (
+                                        <button 
+                                            key={idx} 
+                                            onClick={() => handleAnswer(idx)} 
+                                            disabled={selectedOption !== null}
+                                            className={`w-full p-5 rounded-2xl font-bold text-lg text-left transition-all duration-200 shadow-sm ${btnClass}`}
+                                        >
+                                            <span className="inline-block w-8 font-black opacity-50">{String.fromCharCode(65+idx)}.</span> {opt}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        
+                        <div className="h-2 bg-slate-200 w-full">
+                            <div className="h-full bg-blue-500 transition-all duration-500" style={{width: `${((currentQ) / quiz.questions.length) * 100}%`}}></div>
+                        </div>
                     </div>
                 </div>
             );
         };
 
         const CardDetailModal = ({ cardId, onClose }) => {
-            const card = TRADING_CARDS[cardId]; if(!card) return null;
+            const card = TRADING_CARDS[cardId]; 
+            if(!card) return null;
             return (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur p-4 anim-pop" onClick={onClose}>
                     <div className="bg-white p-6 rounded-3xl max-w-sm w-full text-center relative" onClick={e => e.stopPropagation()}>
                         <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 bg-slate-100 rounded-full font-bold text-slate-600 hover:bg-slate-200">X</button>
                         <h2 className="text-2xl font-black text-slate-800 mb-1">{card.name}</h2>
-                        <div className="flex justify-center mb-6 mt-4"><TradingCard cardId={cardId} isLocked={false} size="large" /></div>
+                        <div className="inline-block px-3 py-1 rounded-full text-xs font-black uppercase mb-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white">{card.rarity}</div>
+                        <div className="flex justify-center mb-6 mt-4"><TradingCard cardId={cardId} isLocked={false} size="large" showRarity={true} /></div>
                         <a href={card.image} download={`RoboCard_${card.id}.png`} className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95" onClick={e => e.stopPropagation()}><i className="fas fa-download"></i> Bild speichern</a>
                     </div>
                 </div>
@@ -309,16 +579,54 @@
 
         const DeckModal = ({ unlockedCards, onClose }) => {
             const [selectedCard, setSelectedCard] = useState(null);
+            const [filter, setFilter] = useState('all');
+            
+            const filteredCards = Object.keys(TRADING_CARDS).filter(id => {
+                if(filter === 'all') return true;
+                if(filter === 'unlocked') return unlockedCards.includes(id);
+                if(filter === 'locked') return !unlockedCards.includes(id);
+                return TRADING_CARDS[id].rarity === filter;
+            });
+
+            const stats = {
+                total: Object.keys(TRADING_CARDS).length,
+                unlocked: unlockedCards.length,
+                common: unlockedCards.filter(id => TRADING_CARDS[id]?.rarity === 'common').length,
+                rare: unlockedCards.filter(id => TRADING_CARDS[id]?.rarity === 'rare').length,
+                epic: unlockedCards.filter(id => TRADING_CARDS[id]?.rarity === 'epic').length,
+                legendary: unlockedCards.filter(id => TRADING_CARDS[id]?.rarity === 'legendary').length
+            };
+
             return (
                 <div className="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur flex items-center justify-center p-4">
                     <div className="bg-slate-50 w-full max-w-6xl h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden anim-pop border-4 border-slate-800">
-                        <div className="p-6 bg-slate-800 text-white flex justify-between items-center shrink-0 shadow-lg z-10">
-                            <h2 className="text-3xl font-black italic uppercase tracking-wider text-yellow-400 flex items-center gap-3"><i className="fas fa-layer-group"></i> Mecha Deck</h2>
-                            <button onClick={onClose} className="w-12 h-12 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-white transition-colors"><i className="fas fa-times text-xl"></i></button>
+                        <div className="p-6 bg-slate-800 text-white shrink-0 shadow-lg z-10">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-3xl font-black italic uppercase tracking-wider text-yellow-400 flex items-center gap-3"><i className="fas fa-layer-group"></i> Mecha Deck</h2>
+                                <button onClick={onClose} className="w-12 h-12 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-white transition-colors"><i className="fas fa-times text-xl"></i></button>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
+                                <div className="bg-white/10 rounded-lg p-2"><div className="font-black text-2xl">{stats.unlocked}/{stats.total}</div><div className="text-white/70">Gesammelt</div></div>
+                                <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-2"><div className="font-black text-2xl">{stats.common}</div><div className="text-green-300">Common</div></div>
+                                <div className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-2"><div className="font-black text-2xl">{stats.rare}</div><div className="text-blue-300">Rare</div></div>
+                                <div className="bg-purple-500/20 border border-purple-500/50 rounded-lg p-2"><div className="font-black text-2xl">{stats.epic}</div><div className="text-purple-300">Epic</div></div>
+                                <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-2"><div className="font-black text-2xl">{stats.legendary}</div><div className="text-yellow-300">Legendary</div></div>
+                            </div>
                         </div>
+                        
+                        <div className="p-4 bg-white border-b border-slate-200 shrink-0">
+                            <div className="flex gap-2 overflow-x-auto pb-2">
+                                {['all', 'unlocked', 'locked', 'common', 'rare', 'epic', 'legendary'].map(f => (
+                                    <button key={f} onClick={() => setFilter(f)} className={`px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap transition-all ${filter === f ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                        {f === 'all' ? 'Alle' : f === 'unlocked' ? 'Besitz' : f === 'locked' ? 'Fehlen' : f.charAt(0).toUpperCase() + f.slice(1)}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
                         <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-100 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-8 justify-items-center">
-                                {Object.keys(TRADING_CARDS).map(id => (<TradingCard key={id} cardId={id} isLocked={!unlockedCards.includes(id)} size="normal" onClick={() => unlockedCards.includes(id) && setSelectedCard(id)} />))}
+                                {filteredCards.map(id => (<TradingCard key={id} cardId={id} isLocked={!unlockedCards.includes(id)} size="normal" onClick={() => unlockedCards.includes(id) && setSelectedCard(id)} showRarity={unlockedCards.includes(id)} />))}
                             </div>
                         </div>
                     </div>
@@ -327,30 +635,221 @@
             );
         };
 
-        const LessonModal = ({ lesson, onClose, onComplete, isAdmin }) => {
+        const LeaderboardModal = ({ users, progress, onClose }) => {
+            const leaderboard = users.map(user => {
+                const prog = progress[user] || { lessons: {}, quizzes: {}, cards: [] };
+                const xp = (Object.keys(prog.lessons || {}).length * 100) + (Object.keys(prog.quizzes || {}).length * 500);
+                const rank = getCurrentRank(xp);
+                return { user, xp, rank, cards: (prog.cards || []).length };
+            }).sort((a, b) => b.xp - a.xp);
+
+            return (
+                <div className="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur flex items-center justify-center p-4" onClick={onClose}>
+                    <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden anim-pop" onClick={e => e.stopPropagation()}>
+                        <div className="p-6 bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
+                            <h2 className="text-3xl font-black mb-2 flex items-center gap-3"><i className="fas fa-trophy"></i> Hall of Fame</h2>
+                            <p className="text-white/80">Die besten Robo-Tamer!</p>
+                        </div>
+                        <div className="p-6 max-h-[60vh] overflow-y-auto">
+                            {leaderboard.map((entry, idx) => (
+                                <div key={entry.user} className={`flex items-center gap-4 p-4 rounded-2xl mb-3 transition-all ${idx < 3 ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-400' : 'bg-slate-50'}`}>
+                                    <div className="w-12 h-12 flex items-center justify-center shrink-0">
+                                        {idx === 0 && <img src="images/trophy_gold.png" className="w-10 h-10" onError={(e) => {e.target.style.display='none'; e.target.parentElement.innerHTML='<div class="text-3xl">🥇</div>';}} alt="Gold" />}
+                                        {idx === 1 && <img src="images/trophy_silver.png" className="w-10 h-10" onError={(e) => {e.target.style.display='none'; e.target.parentElement.innerHTML='<div class="text-3xl">🥈</div>';}} alt="Silver" />}
+                                        {idx === 2 && <img src="images/trophy_bronze.png" className="w-10 h-10" onError={(e) => {e.target.style.display='none'; e.target.parentElement.innerHTML='<div class="text-3xl">🥉</div>';}} alt="Bronze" />}
+                                        {idx > 2 && <div className="text-2xl font-black text-slate-400">#{idx + 1}</div>}
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="text-lg font-black text-slate-800">{entry.user}</h3>
+                                        <p className="text-sm text-slate-500">{entry.rank.title}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-2xl font-black text-blue-600">{entry.xp} XP</div>
+                                        <div className="text-xs text-slate-500">{entry.cards} Karten</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="p-4 border-t border-slate-100">
+                            <button onClick={onClose} className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-colors">Schließen</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const AchievementsModal = ({ achievements, onClose }) => {
+            const allAchievements = Object.values(ACHIEVEMENTS);
+            const unlockedCount = achievements.length;
+
+            return (
+                <div className="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur flex items-center justify-center p-4" onClick={onClose}>
+                    <div className="bg-white w-full max-w-4xl h-[85vh] rounded-3xl shadow-2xl overflow-hidden anim-pop flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="p-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white shrink-0">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <h2 className="text-3xl font-black mb-2 flex items-center gap-3"><i className="fas fa-award"></i> Achievements</h2>
+                                    <p className="text-white/80">{unlockedCount} von {allAchievements.length} freigeschaltet</p>
+                                </div>
+                                <button onClick={onClose} className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center"><i className="fas fa-times text-xl"></i></button>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {allAchievements.map(ach => {
+                                    const unlocked = achievements.includes(ach.id);
+                                    return (
+                                        <div key={ach.id} className={`p-4 rounded-2xl border-2 transition-all ${unlocked ? 'bg-white border-green-400' : 'bg-slate-100 border-slate-200 opacity-60'}`}>
+                                            <div className="flex items-start gap-4">
+                                                <div className={`w-16 h-16 rounded-xl flex items-center justify-center shrink-0 ${unlocked ? 'bg-gradient-to-br from-yellow-400 to-orange-500' : 'bg-slate-300'}`}>
+                                                    <img src={ach.badge} className="w-12 h-12" onError={(e) => {e.target.style.display='none'; e.target.parentElement.innerHTML = `<i class="fas ${ach.icon} text-2xl ${unlocked ? 'text-white' : 'text-slate-500'}"></i>`;}} alt={ach.name} />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h3 className={`font-black text-lg ${unlocked ? 'text-slate-800' : 'text-slate-400'}`}>{ach.name}</h3>
+                                                    <p className={`text-sm ${unlocked ? 'text-slate-600' : 'text-slate-400'}`}>{ach.desc}</p>
+                                                    {unlocked && <div className="mt-2 inline-block bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold"><i className="fas fa-check mr-1"></i>Freigeschaltet!</div>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const DailyChallengePanel = ({ challenges, progress, onClose }) => {
+            const today = new Date().toDateString();
+            const completedToday = progress.lastCompleted === today;
+            const claimed = progress.claimed || false;
+
+            return (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur flex items-center justify-center p-4" onClick={onClose}>
+                    <div className="bg-gradient-to-br from-orange-500 to-red-600 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden anim-pop" onClick={e => e.stopPropagation()}>
+                        <div className="p-6 text-white">
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <h2 className="text-3xl font-black mb-1 flex items-center gap-2"><i className="fas fa-calendar-day"></i> Daily Quest</h2>
+                                    <p className="text-white/80 text-sm">Erneuert um Mitternacht</p>
+                                </div>
+                                <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center"><i className="fas fa-times"></i></button>
+                            </div>
+                            
+                            <div className="bg-white/10 backdrop-blur rounded-2xl p-4 mb-4">
+                                <div className="flex items-center justify-center mb-3">
+                                    <img src="images/daily_chest.png" className="w-24 h-24" onError={(e) => {e.target.style.display='none'; e.target.parentElement.innerHTML='<i class="fas fa-gift text-6xl text-yellow-300"></i>';}} alt="Daily Chest" />
+                                </div>
+                                <h3 className="text-xl font-black text-center text-yellow-300 mb-2">Tägliche Herausforderung</h3>
+                                <p className="text-center text-white/80 text-sm">{challenges.text}</p>
+                            </div>
+
+                            <div className="space-y-3 mb-4">
+                                <div className="bg-white/10 rounded-xl p-3 flex justify-between items-center">
+                                    <span className="font-bold">Fortschritt:</span>
+                                    <span className="text-yellow-300 font-black">{Math.min(progress.count || 0, challenges.target)}/{challenges.target}</span>
+                                </div>
+                                <div className="bg-white/10 rounded-xl p-3 flex justify-between items-center">
+                                    <span className="font-bold">Belohnung:</span>
+                                    <span className="text-yellow-300 font-black">+{challenges.reward} XP</span>
+                                </div>
+                            </div>
+
+                            <div className="w-full bg-white/20 rounded-full h-3 overflow-hidden mb-4">
+                                <div className="bg-yellow-400 h-full transition-all duration-500" style={{width: `${Math.min(((progress.count || 0) / challenges.target) * 100, 100)}%`}}></div>
+                            </div>
+
+                            {completedToday && !claimed && (
+                                <button onClick={() => {onClose(); /* Trigger claim logic */}} className="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-black py-4 rounded-xl shadow-lg transition-transform active:scale-95 anim-pulse">
+                                    <i className="fas fa-gift mr-2"></i> Belohnung abholen!
+                                </button>
+                            )}
+                            {completedToday && claimed && (
+                                <div className="bg-green-500 text-white font-bold py-4 rounded-xl text-center">
+                                    <i className="fas fa-check-circle mr-2"></i> Heute abgeschlossen!
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const LoginScreen = ({ users, onSelectUser, onAddUser, onAdminLogin, hasCurriculum }) => {
+            const [newUserName, setNewUserName] = useState("");
+            const [showAddUser, setShowAddUser] = useState(false);
+            const [adminInput, setAdminInput] = useState("");
+            const [showAdminLogin, setShowAdminLogin] = useState(false);
+            const handleAddUser = () => { if(newUserName.trim()) { onAddUser(newUserName.trim()); setNewUserName(""); setShowAddUser(false); }};
+            const handleAdminCheck = () => { if(adminInput.toLowerCase() === ADMIN_PASS) onAdminLogin(); else alert("Zugriff verweigert!"); };
+
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-400 to-indigo-600 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none"><i className="fas fa-microchip absolute top-10 left-10 text-9xl text-white animate-pulse"></i><i className="fas fa-bolt absolute bottom-20 right-10 text-8xl text-yellow-300"></i></div>
+                    <div className="bg-white/90 backdrop-blur-xl p-8 rounded-3xl shadow-2xl w-full max-w-md text-center relative z-10 anim-pop">
+                        <div className="w-24 h-24 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg border-4 border-white -mt-16"><i className="fas fa-robot text-5xl text-white"></i></div>
+                        <h1 className="text-3xl font-black text-slate-800 mb-1">ROBO LEAGUE</h1>
+                        <p className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-8">Wähle deinen Tamer</p>
+                        {!hasCurriculum && <div className="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 rounded mb-6 text-sm text-left"><p className="font-bold">⚠ System Offline</p><p>Bitte Papa bitten, das Training zu laden.</p></div>}
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                            {users.map(user => (<button key={user} onClick={() => onSelectUser(user)} className="bg-white border-2 border-slate-100 hover:border-blue-400 hover:shadow-lg hover:-translate-y-1 transition-all p-4 rounded-2xl flex flex-col items-center gap-2 group"><div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl font-black group-hover:bg-blue-600 group-hover:text-white transition-colors">{user.charAt(0).toUpperCase()}</div><span className="font-bold text-slate-700">{user}</span></button>))}
+                            {!showAddUser ? (<button onClick={() => setShowAddUser(true)} className="border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 text-slate-400 hover:text-blue-500 transition-all p-4 rounded-2xl flex flex-col items-center gap-2"><div className="w-12 h-12 flex items-center justify-center"><i className="fas fa-plus text-2xl"></i></div><span className="font-bold text-sm">Neuer Spieler</span></button>) : (<div className="col-span-2 bg-slate-50 p-3 rounded-2xl border border-blue-200"><input type="text" value={newUserName} onChange={e => setNewUserName(e.target.value)} placeholder="Dein Name" className="w-full bg-white border border-slate-300 rounded-lg p-2 text-center font-bold text-slate-700 mb-2 focus:ring-2 focus:ring-blue-400 outline-none" autoFocus /><div className="flex gap-2"><button onClick={handleAddUser} className="flex-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-1 font-bold shadow">Start</button><button onClick={() => setShowAddUser(false)} className="px-3 text-slate-400 font-bold hover:text-slate-600">X</button></div></div>)}
+                        </div>
+                        <div className="flex justify-center">{!showAdminLogin ? (<button onClick={() => setShowAdminLogin(true)} className="text-slate-300 hover:text-slate-400 transition"><i className="fas fa-user-shield"></i></button>) : (<div className="flex gap-2 bg-slate-100 p-1 rounded-full border border-slate-200"><input type="password" value={adminInput} onChange={e => setAdminInput(e.target.value)} placeholder="Code" className="w-20 bg-transparent text-center text-xs outline-none" /><button onClick={handleAdminCheck} className="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center text-xs"><i className="fas fa-arrow-right"></i></button></div>)}</div>
+                    </div>
+                </div>
+            );
+        };
+
+        const LessonModal = ({ lesson, onClose, onComplete, isAdmin, isBoss }) => {
             const [tab, setTab] = useState('setup');
             const [checks, setChecks] = useState({setup: {}, steps: {}});
             const [photo, setPhoto] = useState(null);
-
+            const [bossHealth, setBossHealth] = useState(100);
+            
             const setupList = lesson.setup || [];
             const stepsList = lesson.steps || [];
-
+            const sosList = lesson.sos || [];
+            
             const allSetup = setupList.every((_, i) => checks.setup[i]);
             const allSteps = stepsList.every((_, i) => checks.steps[i]);
             const canFinish = (allSetup && allSteps && (!lesson.needsPhoto || photo)) || isAdmin;
 
+            useEffect(() => {
+                if(isBoss && tab === 'steps') {
+                    const totalSteps = stepsList.length;
+                    const completedSteps = Object.values(checks.steps).filter(Boolean).length;
+                    setBossHealth(Math.max(0, 100 - (completedSteps / totalSteps) * 100));
+                }
+            }, [checks.steps, tab]);
+
             return (
                 <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center p-0 sm:p-6 bg-slate-900/60 backdrop-blur-sm">
                     <div className="bg-white w-full max-w-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col anim-pop overflow-hidden">
-                        <div className={`p-6 ${lesson.type === 'boss' ? 'bg-gradient-to-r from-purple-600 to-indigo-600' : 'bg-gradient-to-r from-blue-500 to-cyan-500'} text-white flex justify-between items-start shrink-0 relative overflow-hidden`}>
+                        <div className={`p-6 ${isBoss ? 'bg-gradient-to-r from-purple-600 to-indigo-600' : 'bg-gradient-to-r from-blue-500 to-cyan-500'} text-white flex justify-between items-start shrink-0 relative overflow-hidden`}>
                             <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/20 rounded-full blur-2xl"></div>
-                            <div className="relative z-10"><span className="inline-block bg-black/20 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-2">Level {lesson.id}</span><h2 className="text-2xl font-black leading-tight max-w-[80%]">{lesson.title}</h2></div>
+                            <div className="relative z-10 flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="inline-block bg-black/20 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider">Level {lesson.id}</span>
+                                    {isBoss && <span className="inline-block bg-red-500 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider animate-pulse">BOSS</span>}
+                                </div>
+                                <h2 className="text-2xl font-black leading-tight">{lesson.title}</h2>
+                                {isBoss && tab === 'steps' && (
+                                    <div className="mt-3">
+                                        <div className="flex justify-between text-xs mb-1"><span>Boss HP</span><span>{Math.round(bossHealth)}%</span></div>
+                                        <div className="w-full bg-black/30 rounded-full h-4 overflow-hidden border-2 border-white/30">
+                                            <div className="bg-gradient-to-r from-red-500 to-orange-500 h-full transition-all duration-500" style={{width: `${bossHealth}%`}}></div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                             <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors btn-bounce relative z-10"><i className="fas fa-times text-lg"></i></button>
                         </div>
                         <div className="flex border-b border-slate-100 bg-white shrink-0 p-2 gap-2">
                             <button onClick={() => setTab('setup')} className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase transition-all ${tab==='setup'?'bg-blue-50 text-blue-600 ring-2 ring-blue-100':'text-slate-400 hover:bg-slate-50'}`}>1. Check</button>
                             <button onClick={() => setTab('steps')} disabled={!allSetup && !isAdmin} className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase transition-all ${tab==='steps'?'bg-blue-50 text-blue-600 ring-2 ring-blue-100':(!allSetup && !isAdmin ?'opacity-50 cursor-not-allowed text-slate-300':'text-slate-400 hover:bg-slate-50')}`}>2. Training</button>
-                            {lesson.sos && <button onClick={() => setTab('sos')} className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase transition-all ${tab==='sos'?'bg-red-50 text-red-500 ring-2 ring-red-100':'text-slate-400 hover:bg-slate-50'}`}>Hilfe!</button>}
+                            {sosList.length > 0 && <button onClick={() => setTab('sos')} className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase transition-all ${tab==='sos'?'bg-red-50 text-red-500 ring-2 ring-red-100':'text-slate-400 hover:bg-slate-50'}`}>Hilfe!</button>}
                         </div>
                         <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
                             {tab === 'setup' && (
@@ -370,7 +869,7 @@
                             {tab === 'sos' && (
                                 <div className="space-y-4">
                                     <div className="bg-red-50 p-4 rounded-2xl border border-red-100 flex items-center gap-3 text-red-600 font-bold"><i className="fas fa-kit-medical text-2xl"></i><span>Erste Hilfe Kasten</span></div>
-                                    {lesson.sos && lesson.sos.map((item, i) => (<div key={i} className="bg-white border border-red-100 p-5 rounded-2xl shadow-sm"><div className="font-bold text-red-500 mb-2 flex items-center gap-2"><i className="fas fa-circle-question"></i> {item.problem}</div><div className="text-slate-600 pl-6 text-sm leading-relaxed">{item.solution}</div></div>))}
+                                    {sosList.map((item, i) => (<div key={i} className="bg-white border border-red-100 p-5 rounded-2xl shadow-sm"><div className="font-bold text-red-500 mb-2 flex items-center gap-2"><i className="fas fa-circle-question"></i> {item.problem}</div><div className="text-slate-600 pl-6 text-sm leading-relaxed">{item.solution}</div></div>))}
                                 </div>
                             )}
                         </div>
@@ -383,83 +882,84 @@
         const AdminPanel = ({ db, onImportCurriculum, onImportBackup, onResetData, closeAdmin }) => {
             const fileInputRef = useRef();
             const backupInputRef = useRef();
-            const handleFileLoad = (e, callback) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (event) => { try { const json = JSON.parse(event.target.result); callback(json); } catch (err) { alert("Fehler: " + err.message); }}; reader.readAsText(file); };
-            const downloadBackup = () => { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db)); const downloadAnchorNode = document.createElement('a'); downloadAnchorNode.setAttribute("href", dataStr); downloadAnchorNode.setAttribute("download", "robo_backup.json"); document.body.appendChild(downloadAnchorNode); downloadAnchorNode.click(); downloadAnchorNode.remove(); };
+            const handleFileLoad = (e, callback) => { 
+                const file = e.target.files[0]; 
+                if (!file) return; 
+                const reader = new FileReader(); 
+                reader.onload = (event) => { 
+                    try { 
+                        const json = JSON.parse(event.target.result); 
+                        callback(json);
+                    } catch (err) { 
+                        alert("Fehler: " + err.message); 
+                    }
+                }; 
+                reader.readAsText(file); 
+            };
+            const downloadBackup = () => { 
+                const dataStr = "text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db)); 
+                const downloadAnchorNode = document.createElement('a'); 
+                downloadAnchorNode.setAttribute("href", dataStr); 
+                downloadAnchorNode.setAttribute("download", "robo_backup.json"); 
+                document.body.appendChild(downloadAnchorNode); 
+                downloadAnchorNode.click(); 
+                downloadAnchorNode.remove(); 
+            };
+
             return (
-                <div className="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur overflow-y-auto p-4 custom-scrollbar">
+                <div className="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur overflow-y-auto p-4">
                     <div className="max-w-2xl mx-auto mt-10 mb-20 bg-white rounded-3xl p-8 shadow-2xl">
                         <div className="flex justify-between items-center mb-8 border-b border-slate-100 pb-4"><h2 className="text-2xl font-black text-slate-800"><i className="fas fa-user-shield text-blue-500 mr-2"></i>PAPA ZENTRALE</h2><button onClick={closeAdmin} className="bg-slate-100 px-4 py-2 rounded-xl font-bold text-slate-600 hover:bg-slate-200">Schließen</button></div>
                         <div className="grid gap-6">
-                            <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100"><h3 className="font-bold text-blue-800 mb-2">1. Datei Laden</h3><input type="file" accept=".json" ref={fileInputRef} className="hidden" onChange={(e) => handleFileLoad(e, onImportCurriculum)} /><button onClick={() => fileInputRef.current.click()} className="bg-blue-500 text-white font-bold py-3 px-6 rounded-xl w-full hover:bg-blue-600 shadow-lg shadow-blue-500/20">Datei Importieren</button></div>
-                            <div className="bg-green-50 p-6 rounded-2xl border border-green-100"><h3 className="font-bold text-green-800 mb-2">2. Backup</h3><div className="flex gap-4"><button onClick={downloadBackup} className="flex-1 bg-green-500 text-white font-bold py-3 rounded-xl hover:bg-green-600 shadow-lg shadow-green-500/20">Speichern</button><input type="file" accept=".json" ref={backupInputRef} className="hidden" onChange={(e) => handleFileLoad(e, onImportBackup)} /><button onClick={() => backupInputRef.current.click()} className="flex-1 bg-white border-2 border-green-500 text-green-600 font-bold py-3 rounded-xl hover:bg-green-50">Laden</button></div></div>
-                            <div className="border-t pt-6"><button onClick={() => { if(confirm("ALLES löschen?")) onResetData(); }} className="text-red-400 text-sm font-bold hover:text-red-600">App komplett zurücksetzen</button></div>
+                            <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100"><h3 className="font-bold text-blue-800 mb-2">1. Datei Laden (Training oder Quiz)</h3><p className="text-sm text-blue-600 mb-4">Lade <code>seasonX.json</code> oder <code>quizX.json</code>.</p><input type="file" accept=".json" ref={fileInputRef} className="hidden" onChange={(e) => handleFileLoad(e, onImportCurriculum)} /><button onClick={() => fileInputRef.current.click()} className="bg-blue-500 text-white font-bold py-3 px-6 rounded-xl w-full hover:bg-blue-600 shadow-lg shadow-blue-500/20"><i className="fas fa-cloud-upload-alt mr-2"></i> Datei Importieren</button></div>
+                            <div className="bg-green-50 p-6 rounded-2xl border border-green-100"><h3 className="font-bold text-green-800 mb-2">2. Backup</h3><div className="flex gap-4"><button onClick={downloadBackup} className="flex-1 bg-green-500 text-white font-bold py-3 rounded-xl hover:bg-green-600 shadow-lg shadow-green-500/20"><i className="fas fa-download mr-2"></i> Speichern</button><input type="file" accept=".json" ref={backupInputRef} className="hidden" onChange={(e) => handleFileLoad(e, onImportBackup)} /><button onClick={() => backupInputRef.current.click()} className="flex-1 bg-white border-2 border-green-500 text-green-600 font-bold py-3 rounded-xl hover:bg-green-50"><i className="fas fa-upload mr-2"></i> Laden</button></div></div>
+                            <div className="border-t pt-6"><button onClick={() => { if(confirm("ALLES löschen?")) onResetData(); }} className="text-red-400 text-sm font-bold hover:text-red-600"><i className="fas fa-trash mr-1"></i> App komplett zurücksetzen</button></div>
                         </div>
                     </div>
                 </div>
             );
         };
 
-        const LoginScreen = ({ users, onSelectUser, onAddUser, onAdminLogin, hasCurriculum }) => {
-            const [newUserName, setNewUserName] = useState("");
-            const [showAddUser, setShowAddUser] = useState(false);
-            const [adminInput, setAdminInput] = useState("");
-            const [showAdminLogin, setShowAdminLogin] = useState(false);
-            const handleAddUser = () => { if(newUserName.trim()) { onAddUser(newUserName.trim()); setNewUserName(""); setShowAddUser(false); }};
-            const handleAdminCheck = () => { if(adminInput.toLowerCase() === ADMIN_PASS) onAdminLogin(); else alert("Zugriff verweigert!"); };
-            const [mascotError, setMascotError] = useState(false);
-
-            return (
-                <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-400 to-indigo-600 relative overflow-hidden">
-                    <div className="bg-white/90 backdrop-blur-xl p-8 rounded-3xl shadow-2xl w-full max-w-md text-center relative z-10 anim-pop border-4 border-white/50">
-                        <div className="w-32 h-32 mx-auto -mt-20 mb-4 drop-shadow-2xl hover:scale-110 transition-transform duration-300">
-                            {mascotError ? <div className="w-24 h-24 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-full flex items-center justify-center mx-auto shadow-lg border-4 border-white"><i className="fas fa-robot text-5xl text-white"></i></div> : <img src={MASCOT_IMAGE} className="w-full h-full object-contain" onError={() => setMascotError(true)} />}
-                        </div>
-                        <div className="mb-8">
-                            <img src={LOGO_IMAGE} className="max-w-[200px] mx-auto mb-2" onError={(e) => e.target.style.display='none'} />
-                            <h1 className="text-4xl font-black text-slate-800 mb-1">ROBO LEAGUE</h1>
-                            <p className="text-slate-500 text-sm font-bold uppercase tracking-wider">Wähle deinen Tamer</p>
-                        </div>
-                        {!hasCurriculum && <div className="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 rounded mb-6 text-sm text-left"><p className="font-bold">⚠ System Offline</p><p>Bitte Papa bitten, das Training zu laden.</p></div>}
-                        <div className="grid grid-cols-2 gap-4 mb-6">
-                            {users.map(user => (<button key={user} onClick={() => onSelectUser(user)} className="bg-white border-2 border-slate-100 hover:border-blue-400 hover:shadow-lg hover:-translate-y-1 transition-all p-4 rounded-2xl flex flex-col items-center gap-2 group"><div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl font-black group-hover:bg-blue-600 group-hover:text-white transition-colors">{user.charAt(0).toUpperCase()}</div><span className="font-bold text-slate-700">{user}</span></button>))}
-                            {!showAddUser ? (<button onClick={() => setShowAddUser(true)} className="border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 text-slate-400 hover:text-blue-500 transition-all p-4 rounded-2xl flex flex-col items-center gap-2"><div className="w-12 h-12 flex items-center justify-center"><i className="fas fa-plus text-2xl"></i></div><span className="font-bold text-sm">Neuer Spieler</span></button>) : (<div className="col-span-2 bg-slate-50 p-3 rounded-2xl border border-blue-200"><input type="text" value={newUserName} onChange={e => setNewUserName(e.target.value)} placeholder="Dein Name" className="w-full bg-white border border-slate-300 rounded-lg p-2 text-center font-bold text-slate-700 mb-2 focus:ring-2 focus:ring-blue-400 outline-none" autoFocus /><div className="flex gap-2"><button onClick={handleAddUser} className="flex-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-1 font-bold shadow">Start</button><button onClick={() => setShowAddUser(false)} className="px-3 text-slate-400 font-bold hover:text-slate-600">X</button></div></div>)}
-                        </div>
-                        <div className="flex justify-center">{!showAdminLogin ? (<button onClick={() => setShowAdminLogin(true)} className="text-slate-300 hover:text-slate-400 transition"><i className="fas fa-user-shield"></i></button>) : (<div className="flex gap-2 bg-slate-100 p-1 rounded-full border border-slate-200"><input type="password" value={adminInput} onChange={e => setAdminInput(e.target.value)} placeholder="Code" className="w-20 bg-transparent text-center text-xs outline-none" /><button onClick={handleAdminCheck} className="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center text-xs"><i className="fas fa-arrow-right"></i></button></div>)}</div>
-                    </div>
-                </div>
-            );
-        };
-
-        const Game = ({ db, setDb, currentUser, setCurrentUser }) => {
+        const App = () => {
+            const [db, setDb] = useState(() => { 
+                const saved = localStorage.getItem('robo_db_v3'); 
+                return saved ? JSON.parse(saved) : { 
+                    users: [], 
+                    curriculum: [], 
+                    quizzes: {}, 
+                    progress: {},
+                    achievements: {},
+                    dailyProgress: {}
+                }; 
+            });
+            const [currentUser, setCurrentUser] = useState(null);
             const [activeLesson, setActiveLesson] = useState(null);
             const [activeQuiz, setActiveQuiz] = useState(null);
             const [showAdmin, setShowAdmin] = useState(false);
             const [showDeck, setShowDeck] = useState(false);
+            const [showLeaderboard, setShowLeaderboard] = useState(false);
+            const [showAchievements, setShowAchievements] = useState(false);
+            const [showDaily, setShowDaily] = useState(false);
             const [newCard, setNewCard] = useState(null);
             const [addedXp, setAddedXp] = useState(null);
             const [showRankUp, setShowRankUp] = useState(null);
+            const [achievementNotif, setAchievementNotif] = useState(null);
+            const [mascotMood, setMascotMood] = useState('idle');
+            const [comboCount, setComboCount] = useState(0);
+            const [lastCompletionTime, setLastCompletionTime] = useState(null);
             const prevXpRef = useRef(0);
 
-            const userProg = db.progress[currentUser] || { lessons: {}, quizzes: {}, cards: [] };
+            const userProg = db.progress[currentUser] || { lessons: {}, quizzes: {}, cards: [], completedToday: 0 };
             const completedLessons = userProg.lessons || {};
             const completedQuizzes = userProg.quizzes || {};
+            const unlockedCards = userProg.cards || [];
+            const userAchievements = db.achievements[currentUser] || [];
+            
             const currentXp = (currentUser === 'Admin') ? 0 : (Object.keys(completedLessons).length * 100) + (Object.keys(completedQuizzes).length * 500);
-
-            useEffect(() => {
-                if (currentUser === 'Admin') return;
-                if (prevXpRef.current > 0 && currentXp > prevXpRef.current) {
-                    setAddedXp(currentXp - prevXpRef.current);
-                    setTimeout(() => setAddedXp(null), 2000);
-                    const oldRank = getCurrentRank(prevXpRef.current);
-                    const newRank = getCurrentRank(currentXp);
-                    if (newRank.title !== oldRank.title) setShowRankUp(newRank);
-                }
-                prevXpRef.current = currentXp;
-            }, [currentXp, currentUser]);
-
             const displayXP = useCountUp(currentXp, 1500);
             const currentRank = getCurrentRank(currentXp);
             const nextRank = getNextRank(currentXp);
+            
             let progressPercent = 100;
             if (nextRank) {
                 const prevRankXP = currentRank.xp;
@@ -468,122 +968,423 @@
                 progressPercent = Math.min((xpInCurrentRank / xpNeededForNext) * 100, 100);
             }
 
+            useEffect(() => localStorage.setItem('robo_db_v3', JSON.stringify(db)), [db]);
+
+            // Combo System
+            useEffect(() => {
+                if(lastCompletionTime) {
+                    const now = Date.now();
+                    const diff = (now - lastCompletionTime) / 1000;
+                    if(diff < 60) { // Within 60 seconds
+                        setComboCount(prev => prev + 1);
+                    } else {
+                        setComboCount(1);
+                    }
+                }
+            }, [lastCompletionTime]);
+
+             // XP Change Detection
+            useEffect(() => {
+                if (currentUser === 'Admin') return;
+                if (prevXpRef.current > 0 && currentXp > prevXpRef.current) {
+                    const xpGained = currentXp - prevXpRef.current;
+                    const bonusXp = comboCount >= 2 ? (comboCount >= 5 ? 100 : (comboCount >= 3 ? 50 : 20)) : 0;
+                    setAddedXp(xpGained + bonusXp);
+                    setTimeout(() => setAddedXp(null), 2000);
+                    
+                    const oldRank = getCurrentRank(prevXpRef.current);
+                    const newRank = getCurrentRank(currentXp);
+                    if (newRank.title !== oldRank.title) {
+                        setShowRankUp(newRank);
+                        setMascotMood('excited');
+                        setTimeout(() => setMascotMood('happy'), 3000);
+                    } else {
+                        setMascotMood('happy');
+                        setTimeout(() => setMascotMood('idle'), 2000);
+                    }
+                }
+                prevXpRef.current = currentXp;
+            }, [currentXp, currentUser, comboCount]);
+
+
+
+
+            const addUser = (name) => { 
+                if(!db.users.includes(name)) { 
+                    setDb(prev => ({ 
+                        ...prev, 
+                        users: [...prev.users, name], 
+                        progress: { 
+                            ...prev.progress, 
+                            [name]: { lessons: {}, quizzes: {}, cards: [], completedToday: 0 } 
+                        },
+                        achievements: {
+                            ...prev.achievements,
+                            [name]: []
+                        }
+                    })); 
+                }
+            };
+            
             const finishLesson = (lessonId) => {
                 if(currentUser === 'Admin') return;
+                
+                setLastCompletionTime(Date.now());
+                
                 const jsonReward = activeLesson.reward;
                 const mapReward = REWARD_MAP[lessonId];
                 const rewardCardId = jsonReward || mapReward;
-                let cardUnlocked = false;
-                let currentCards = userProg.cards || [];
-                if(rewardCardId && !currentCards.includes(rewardCardId)) { currentCards = [...currentCards, rewardCardId]; setNewCard(rewardCardId); cardUnlocked = true; }
-                const newProg = { ...userProg, lessons: { ...completedLessons, [lessonId]: true }, cards: currentCards };
-                setDb(prev => ({ ...prev, progress: { ...prev.progress, [currentUser]: newProg } }));
+                let currentCards = (db.progress[currentUser]?.cards) || [];
+                
+                if(rewardCardId && !currentCards.includes(rewardCardId)) { 
+                    currentCards = [...currentCards, rewardCardId]; 
+                    setNewCard(rewardCardId);
+                    setMascotMood('excited');
+                    setTimeout(() => setMascotMood('idle'), 3000);
+                }
+                
+                const userProg = db.progress[currentUser] || { lessons: {}, quizzes: {}, cards: [], completedToday: 0 };
+                const lessons = userProg.lessons || {};
+                const newLessons = { ...lessons, [lessonId]: true };
+                const newCompletedToday = (userProg.completedToday || 0) + 1;
+                
+                // Achievement Checks
+                const currentAchievements = db.achievements[currentUser] || [];
+                const newAchievements = [...currentAchievements];
+                
+                // First Steps
+                if(Object.keys(lessons).length === 0 && !newAchievements.includes('first_steps')) {
+                    newAchievements.push('first_steps');
+                    setTimeout(() => setAchievementNotif(ACHIEVEMENTS.first_steps), 2000);
+                }
+                
+                // Speed Demon
+                if(newCompletedToday >= 5 && !newAchievements.includes('speed_demon')) {
+                    newAchievements.push('speed_demon');
+                    setTimeout(() => setAchievementNotif(ACHIEVEMENTS.speed_demon), 2500);
+                }
+                
+                // Card Collector 10
+                if(currentCards.length >= 10 && !newAchievements.includes('card_collector_10')) {
+                    newAchievements.push('card_collector_10');
+                    setTimeout(() => setAchievementNotif(ACHIEVEMENTS.card_collector_10), 3000);
+                }
+                
+                // Card Collector 25
+                if(currentCards.length >= 25 && !newAchievements.includes('card_collector_25')) {
+                    newAchievements.push('card_collector_25');
+                    setTimeout(() => setAchievementNotif(ACHIEVEMENTS.card_collector_25), 3000);
+                }
+                
+                // Boss Slayer
+                const bossLevels = db.curriculum.flatMap(s => s.lessons || []).filter(l => l.type === 'boss');
+                const completedBosses = bossLevels.filter(b => newLessons[b.id]).length;
+                if(bossLevels.length > 0 && completedBosses === bossLevels.length && !newAchievements.includes('boss_slayer')) {
+                    newAchievements.push('boss_slayer');
+                    setTimeout(() => setAchievementNotif(ACHIEVEMENTS.boss_slayer), 3500);
+                }
+                
+                setDb(prev => ({ 
+                    ...prev, 
+                    progress: { 
+                        ...prev.progress, 
+                        [currentUser]: { 
+                            ...userProg, 
+                            lessons: newLessons, 
+                            cards: currentCards,
+                            completedToday: newCompletedToday
+                        } 
+                    },
+                    achievements: {
+                        ...prev.achievements,
+                        [currentUser]: newAchievements
+                    }
+                }));
                 setActiveLesson(null);
             };
 
-            const finishQuiz = (quizId, passed, score) => {
+            const finishQuiz = (quizId, passed, score, isPerfect) => {
                 setActiveQuiz(null);
                 if(currentUser === 'Admin') return;
+                
                 if(passed) {
-                    const newProg = { ...userProg, quizzes: { ...completedQuizzes, [quizId]: score } };
-                    setDb(prev => ({ ...prev, progress: { ...prev.progress, [currentUser]: newProg } }));
+                    setLastCompletionTime(Date.now());
+                    const userProg = db.progress[currentUser] || { lessons: {}, quizzes: {}, cards: [], completedToday: 0 };
+                    const quizzes = userProg.quizzes || {};
+                    const newQuizzes = { ...quizzes, [quizId]: score };
+                    
+                    // Achievement Checks
+                    const currentAchievements = db.achievements[currentUser] || [];
+                    const newAchievements = [...currentAchievements];
+                    
+                    // Perfectionist
+                    if(isPerfect && !newAchievements.includes('perfectionist')) {
+                        newAchievements.push('perfectionist');
+                        setTimeout(() => setAchievementNotif(ACHIEVEMENTS.perfectionist), 1500);
+                    }
+                    
+                    // Quiz Master
+                    const totalQuizzesAvailable = Object.keys(db.quizzes).length;
+                    if(totalQuizzesAvailable > 0 && Object.keys(newQuizzes).length === totalQuizzesAvailable && !newAchievements.includes('quiz_master')) {
+                        newAchievements.push('quiz_master');
+                        setTimeout(() => setAchievementNotif(ACHIEVEMENTS.quiz_master), 2000);
+                    }
+                    
+                    setDb(prev => ({ 
+                        ...prev, 
+                        progress: { 
+                            ...prev.progress, 
+                            [currentUser]: { 
+                                ...userProg, 
+                                quizzes: newQuizzes
+                            } 
+                        },
+                        achievements: {
+                            ...prev.achievements,
+                            [currentUser]: newAchievements
+                        }
+                    }));
+                    
+                    setMascotMood('happy');
+                    setTimeout(() => setMascotMood('idle'), 2000);
+                } else {
+                    setMascotMood('sad');
+                    setTimeout(() => setMascotMood('idle'), 2000);
                 }
             };
 
+
             const handleImport = (json) => {
-                if(Array.isArray(json)) { setDb(prev => { const currentCurriculum = prev.curriculum || []; let newCurriculum = [...currentCurriculum]; json.forEach(newSeason => { const index = newCurriculum.findIndex(s => s.id === newSeason.id); if (index !== -1) { newCurriculum[index] = newSeason; } else { newCurriculum.push(newSeason); } }); newCurriculum.sort((a, b) => { const numA = parseInt(a.id.replace('s', '')); const numB = parseInt(b.id.replace('s', '')); return numA - numB; }); return { ...prev, curriculum: newCurriculum }; }); alert("Training geladen!"); } 
-                else if (json.seasonId && json.questions) { setDb(prev => ({ ...prev, quizzes: { ...prev.quizzes, [json.seasonId]: json } })); alert(`Quiz für ${json.seasonId} geladen!`); }
-                else { alert("Unbekanntes Dateiformat."); }
+                if(Array.isArray(json)) { 
+                    setDb(prev => {
+                        const currentCurriculum = prev.curriculum || [];
+                        let newCurriculum = [...currentCurriculum];
+                        json.forEach(newSeason => {
+                            const index = newCurriculum.findIndex(s => s.id === newSeason.id);
+                            if (index !== -1) { 
+                                newCurriculum[index] = newSeason; 
+                            } else { 
+                                newCurriculum.push(newSeason); 
+                            }
+                        });
+                        newCurriculum.sort((a, b) => { 
+                            const numA = parseInt(a.id.replace('s', '')); 
+                            const numB = parseInt(b.id.replace('s', '')); 
+                            return numA - numB; 
+                        });
+                        return { ...prev, curriculum: newCurriculum };
+                    });
+                    alert("Training geladen!"); 
+                } 
+                else if (json.seasonId && json.questions) {
+                    setDb(prev => ({
+                        ...prev,
+                        quizzes: {
+                            ...prev.quizzes,
+                            [json.seasonId]: json
+                        }
+                    }));
+                    alert(`Quiz für ${json.seasonId} geladen!`);
+                }
+                else { 
+                    alert("Unbekanntes Dateiformat."); 
+                }
                 setShowAdmin(false);
             };
 
-            const importBackup = (json) => { if(json.users) { setDb(json); alert("Wiederhergestellt!"); setShowAdmin(false); }};
-            const resetData = () => { setDb({ users: [], curriculum: [], quizzes: {}, progress: {} }); setShowAdmin(false); setCurrentUser(null); };
+            const importBackup = (json) => { 
+                if(json.users) { 
+                    setDb(json); 
+                    alert("Wiederhergestellt!"); 
+                    setShowAdmin(false); 
+                }
+            };
+            
+            const resetData = () => { 
+                setDb({ users: [], curriculum: [], quizzes: {}, progress: {}, achievements: {}, dailyProgress: {} }); 
+                setShowAdmin(false); 
+                setCurrentUser(null); 
+            };
+
+            if (!currentUser) {
+                return <LoginScreen 
+                    users={db.users} 
+                    onSelectUser={setCurrentUser} 
+                    onAddUser={addUser} 
+                    onAdminLogin={() => { setCurrentUser('Admin'); setShowAdmin(true); }} 
+                    hasCurriculum={db.curriculum && db.curriculum.length > 0} 
+                />;
+            }
 
             return (
                 <div className="min-h-screen pb-12 bg-slate-50">
-                    <div className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-200 px-4 py-3 shadow-sm flex justify-between items-center">
-                        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setCurrentUser(null)}>
-                            <div className="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-105 transition-transform"><i className="fas fa-chevron-left"></i></div>
-                            <div><div className="text-xs text-blue-500 font-black uppercase tracking-wider">{currentUser === 'Admin' ? 'PAPA MODE' : `TAMER ${currentUser.toUpperCase()}`}</div><div className="text-slate-800 font-black leading-none text-lg">Robo League</div></div>
+                    {/* Header with Progress Ring */}
+                    <div className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-200 px-4 py-3 shadow-sm">
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setCurrentUser(null)}>
+                                <div className="relative">
+                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 text-white flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform font-black text-xl">
+                                        {currentUser === 'Admin' ? <i className="fas fa-user-shield"></i> : currentUser.charAt(0).toUpperCase()}
+                                    </div>
+                                    {currentUser !== 'Admin' && (
+                                        <div className="absolute -top-1 -right-1">
+                                            <ProgressRing progress={progressPercent} size={56} />
+                                        </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <div className="text-xs text-blue-500 font-black uppercase tracking-wider">
+                                        {currentUser === 'Admin' ? 'PAPA MODE' : currentRank.title}
+                                    </div>
+                                    <div className="text-slate-800 font-black leading-none text-lg">{currentUser}</div>
+                                    {currentUser !== 'Admin' && (
+                                        <div className="text-xs text-slate-500 font-bold">{displayXP} XP</div>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                {currentUser !== 'Admin' && (
+                                    <>
+                                        <button onClick={() => setShowAchievements(true)} className="relative bg-purple-500 text-white w-10 h-10 rounded-xl font-bold shadow-lg hover:bg-purple-600 transition-all flex items-center justify-center">
+                                            <i className="fas fa-award"></i>
+                                            {userAchievements.length > 0 && <span className="absolute -top-1 -right-1 bg-yellow-400 text-slate-900 text-xs font-black w-5 h-5 rounded-full flex items-center justify-center">{userAchievements.length}</span>}
+                                        </button>
+                                        <button onClick={() => setShowLeaderboard(true)} className="bg-yellow-500 text-white w-10 h-10 rounded-xl font-bold shadow-lg hover:bg-yellow-600 transition-all flex items-center justify-center">
+                                            <i className="fas fa-trophy"></i>
+                                        </button>
+                                        <button onClick={() => setShowDeck(true)} className="relative bg-slate-800 text-white px-4 py-2 rounded-xl font-bold shadow-lg hover:bg-slate-700 transition-all flex items-center gap-2">
+                                            <i className="fas fa-layer-group"></i>
+                                            <span className="hidden sm:inline">Deck</span>
+                                            <span className="absolute -top-1 -right-1 bg-yellow-400 text-slate-900 text-xs font-black w-5 h-5 rounded-full flex items-center justify-center">{unlockedCards.length}</span>
+                                        </button>
+                                    </>
+                                )}
+                                {currentUser === 'Admin' && (
+                                    <button onClick={() => setShowAdmin(true)} className="bg-slate-800 text-white px-4 py-2 rounded-xl font-bold shadow-lg hover:bg-slate-700 transition-all">
+                                        <i className="fas fa-cog"></i>
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                            {currentUser !== 'Admin' && (<div className="flex flex-col items-end"><div className="flex items-center gap-2"><button onClick={() => setShowDeck(true)} className="bg-slate-800 text-white w-8 h-8 rounded-full text-xs font-bold shadow-lg hover:scale-105 transition flex items-center justify-center mr-2"><i className="fas fa-layer-group text-yellow-400"></i></button><div className="bg-yellow-100 px-3 py-1 rounded-full border border-yellow-200 text-sm font-black text-yellow-600 flex items-center gap-2 w-28 justify-center"><i className="fas fa-bolt"></i> {displayXP}</div></div>{nextRank && <div className="w-full h-1 bg-slate-200 rounded-full mt-1 overflow-hidden"><div className="h-full bg-blue-500 transition-all duration-1000" style={{width: `${progressPercent}%`}}></div></div>}</div>)}
-                            {currentUser === 'Admin' && <button onClick={() => setShowAdmin(true)} className="bg-slate-800 text-white px-3 py-1 rounded-lg text-sm font-bold">Admin</button>}
-                        </div>
+
+                        {/* Combo Indicator */}
+                        {comboCount >= 2 && currentUser !== 'Admin' && (
+                            <div className="mt-2 bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 py-2 rounded-xl text-center font-black text-sm anim-pulse">
+                                🔥 COMBO x{comboCount}! +{comboCount >= 5 ? 100 : (comboCount >= 3 ? 50 : 20)} Bonus XP
+                            </div>
+                        )}
                     </div>
-                    <div className="max-w-3xl mx-auto p-4 space-y-8 mt-4">
-                        {(!db.curriculum || db.curriculum.length === 0) && (<div className="text-center mt-20 text-slate-400"><div className="w-32 h-32 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4"><i className="fas fa-ghost text-5xl opacity-50"></i></div><h3 className="font-bold text-xl text-slate-600">Keine Quests verfügbar</h3><p className="text-sm">Papa muss das Training erst laden.</p></div>)}
-                        {db.curriculum && db.curriculum.map((season) => {
-                            const allLessonsDone = season.lessons.every(l => completedLessons[l.id]);
-                            const seasonQuiz = db.quizzes ? db.quizzes[season.id] : null;
-                            const quizDone = seasonQuiz && completedQuizzes[seasonQuiz.id];
+
+                    {/* Main Content */}
+                    <div className="max-w-5xl mx-auto p-4 space-y-6">
+                        {db.curriculum.map(season => {
+                            const seasonQuiz = db.quizzes[season.id];
+                            const quizCompleted = completedQuizzes[season.id] !== undefined;
+                            
                             return (
-                                <div key={season.id} className="relative">
-                                    <div className="flex items-center gap-4 mb-6 pl-2"><div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl bg-white shadow-lg border-2 border-${season.color}-100 text-${season.color}-500 transform rotate-3`}><i className={`fas ${season.icon}`}></i></div><div><h2 className="text-3xl font-black text-slate-800 tracking-tight uppercase italic">{season.title}</h2><p className="text-slate-500 font-bold text-sm">{season.description}</p></div></div>
-                                    <div className="grid gap-4">
-                                        {season.lessons.map((lesson, lIdx) => {
-                                            const isDone = completedLessons[lesson.id];
-                                            let isLocked = false;
-                                            if (lIdx > 0 && !completedLessons[season.lessons[lIdx-1].id]) isLocked = true;
-                                            if (currentUser === 'Admin') isLocked = false;
-                                            return (<button key={lesson.id} disabled={isLocked} onClick={() => setActiveLesson(lesson)} className={`w-full text-left relative group transition-all duration-300 transform ${isLocked ? 'opacity-60 scale-95 grayscale cursor-not-allowed' : 'hover:scale-[1.02] cursor-pointer'}`}><div className={`bg-white p-5 rounded-3xl border-b-4 border-r-4 transition-all flex justify-between items-center ${isDone ? 'border-green-500 shadow-none bg-green-50' : isLocked ? 'border-slate-200' : 'border-blue-500 shadow-xl shadow-blue-200'}`}><div className="flex items-center gap-4"><div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg ${isDone ? 'bg-green-500 text-white' : isLocked ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-600'}`}>{isDone ? <i className="fas fa-check"></i> : lesson.id}</div><div><div className="flex gap-2 mb-1">{lesson.type === 'boss' && <span className="bg-purple-100 text-purple-600 text-[10px] px-2 py-0.5 rounded-full font-black uppercase">Arena Kampf</span>}{lesson.type === 'challenge' && <span className="bg-orange-100 text-orange-600 text-[10px] px-2 py-0.5 rounded-full font-black uppercase">Challenge</span>}</div><h3 className={`font-black text-lg ${isDone ? 'text-green-700' : 'text-slate-700'}`}>{lesson.title}</h3></div></div><div className="text-2xl opacity-20"><i className={`fas ${isLocked ? 'fa-lock' : 'fa-chevron-right'}`}></i></div></div></button>);
+                                <div key={season.id} className="bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-100 anim-slide-right">
+                                    <div className="bg-gradient-to-r from-slate-800 to-slate-700 text-white p-6">
+                                        <h2 className="text-2xl font-black mb-2">{season.title}</h2>
+                                        <p className="text-slate-300 text-sm">{season.description}</p>
+                                    </div>
+                                    <div className="p-4 space-y-3">
+                                        {season.lessons && season.lessons.map(lesson => {
+                                            const completed = completedLessons[lesson.id];
+                                            const isBoss = lesson.type === 'boss';
+                                            return (
+                                                <button 
+                                                    key={lesson.id}
+                                                    onClick={() => setActiveLesson(lesson)} 
+                                                    className={`w-full p-4 rounded-xl font-bold text-left transition-all flex items-center justify-between ${
+                                                        completed 
+                                                            ? 'bg-green-50 border-2 border-green-200 text-green-700' 
+                                                            : 'bg-slate-50 border-2 border-slate-200 text-slate-700 hover:border-blue-400 hover:shadow-lg hover:scale-[1.02]'
+                                                    } ${isBoss ? 'ring-2 ring-purple-500' : ''}`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                                            isBoss 
+                                                                ? 'bg-purple-100 text-purple-600' 
+                                                                : 'bg-blue-100 text-blue-600'
+                                                        }`}>
+                                                            <i className={`fas ${isBoss ? 'fa-crown' : 'fa-graduation-cap'}`}></i>
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="text-xs text-slate-500 font-black uppercase">Level {lesson.id}</div>
+                                                                {isBoss && <span className="bg-purple-500 text-white text-xs px-2 py-0.5 rounded-full font-black uppercase">Boss</span>}
+                                                            </div>
+                                                            <div>{lesson.title}</div>
+                                                        </div>
+                                                    </div>
+                                                    {completed && <i className="fas fa-check-circle text-green-500 text-2xl"></i>}
+                                                </button>
+                                            );
                                         })}
-                                        {seasonQuiz && (<div className="mt-4 border-t-2 border-slate-200 pt-4 border-dashed"><button onClick={() => setActiveQuiz(seasonQuiz)} disabled={!allLessonsDone && currentUser !== 'Admin'} className={`w-full p-6 rounded-3xl border-4 text-left relative transition-all group ${(!allLessonsDone && currentUser !== 'Admin') ? 'bg-slate-100 border-slate-300 opacity-70 grayscale cursor-not-allowed' : 'bg-yellow-50 border-yellow-400 hover:scale-105 cursor-pointer shadow-xl'}`}><div className="flex items-center gap-4"><div className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl border-4 ${quizDone ? 'bg-green-500 border-white text-white' : 'bg-yellow-400 border-yellow-200 text-yellow-900'}`}><i className={`fas ${quizDone ? 'fa-check' : 'fa-graduation-cap'}`}></i></div><div><div className="text-xs font-black uppercase text-yellow-600 tracking-widest mb-1">Abschluss-Prüfung</div><h3 className="text-xl font-black text-slate-800">{seasonQuiz.title}</h3></div><div className="ml-auto text-3xl text-yellow-400">{(!allLessonsDone && currentUser !== 'Admin') ? <i className="fas fa-lock text-slate-300"></i> : <i className="fas fa-play-circle group-hover:scale-110 transition-transform"></i>}</div></div></button></div>)}
+                                        
+                                        {seasonQuiz && (
+                                            <button 
+                                                onClick={() => setActiveQuiz(seasonQuiz)} 
+                                                className={`w-full p-4 rounded-xl font-bold text-left transition-all flex items-center justify-between mt-4 border-2 ${
+                                                    quizCompleted
+                                                        ? 'bg-yellow-50 border-yellow-300 text-yellow-700'
+                                                        : 'bg-orange-50 border-orange-200 text-orange-700 hover:border-orange-400 hover:shadow-lg hover:scale-[1.02]'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center">
+                                                        <i className="fas fa-clipboard-question"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-xs text-orange-500 font-black uppercase">Quiz</div>
+                                                        <div>{seasonQuiz.title}</div>
+                                                    </div>
+                                                </div>
+                                                {quizCompleted && (
+                                                    <div className="text-right">
+                                                        <i className="fas fa-trophy text-yellow-500 text-2xl"></i>
+                                                        <div className="text-xs">{completedQuizzes[season.id]} Punkte</div>
+                                                    </div>
+                                                )}
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             );
                         })}
+
+                        {db.curriculum.length === 0 && (
+                            <div className="text-center py-12">
+                                <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i className="fas fa-inbox text-4xl text-slate-300"></i>
+                                </div>
+                                <h3 className="text-xl font-black text-slate-400 mb-2">Noch keine Trainings</h3>
+                                <p className="text-slate-400">Papa muss erst das Curriculum laden.</p>
+                            </div>
+                        )}
                     </div>
-                    {addedXp && <XPFloater amount={addedXp} />}
-                    {showRankUp && <RankUpModal rank={showRankUp} onClose={() => setShowRankUp(null)} />}
-                    {activeLesson && <LessonModal lesson={activeLesson} onClose={() => setActiveLesson(null)} onComplete={() => finishLesson(activeLesson.id)} isAdmin={currentUser === 'Admin'} />}
-                    {activeQuiz && <QuizModal quiz={activeQuiz} onClose={() => setActiveQuiz(null)} onFinish={(passed, score) => finishQuiz(activeQuiz.id, passed, score)} />}
+
+                    {/* Modals */}
+                    {activeLesson && <LessonModal lesson={activeLesson} onClose={() => setActiveLesson(null)} onComplete={() => finishLesson(activeLesson.id)} isAdmin={currentUser === 'Admin'} isBoss={activeLesson.type === 'boss'} />}
+                    {activeQuiz && <QuizModal quiz={activeQuiz} onClose={() => setActiveQuiz(null)} onFinish={(passed, score, isPerfect) => finishQuiz(activeQuiz.seasonId, passed, score, isPerfect)} />}
+                    {showDeck && <DeckModal unlockedCards={unlockedCards} onClose={() => setShowDeck(false)} />}
+                    {showLeaderboard && <LeaderboardModal users={db.users} progress={db.progress} onClose={() => setShowLeaderboard(false)} />}
+                    {showAchievements && <AchievementsModal achievements={userAchievements} onClose={() => setShowAchievements(false)} />}
                     {showAdmin && <AdminPanel db={db} onImportCurriculum={handleImport} onImportBackup={importBackup} onResetData={resetData} closeAdmin={() => setShowAdmin(false)} />}
-                    {showDeck && <DeckModal unlockedCards={userProg.cards || []} onClose={() => setShowDeck(false)} />}
-                    {newCard && (<div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur animate-fade-in p-4"><div className="text-center anim-pop" onClick={e => e.stopPropagation()}><h2 className="text-4xl font-black text-yellow-400 mb-6 drop-shadow-lg uppercase italic animate-bounce">Neue Karte freigeschaltet!</h2><div className="transform scale-150 mb-8" onClick={() => { setNewCard(null); setShowDeck(true); }}><TradingCard cardId={newCard} isLocked={false} size="large" /></div><div className="flex gap-4 justify-center"><button onClick={() => setNewCard(null)} className="bg-white/20 hover:bg-white/30 text-white border border-white font-bold py-2 px-6 rounded-full">Schließen</button><a href={TRADING_CARDS[newCard].image} download={`RoboCard_${newCard}.png`} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full flex items-center gap-2"><i className="fas fa-download"></i> Bild speichern</a></div></div></div>)}
+                    
+                    {/* Floating Elements */}
+                    {newCard && <CardUnlockModal cardId={newCard} onClose={() => setNewCard(null)} />}
+                    {addedXp && <XPFloater amount={addedXp} isCombo={comboCount >= 2} comboCount={comboCount} />}
+                    {showRankUp && <RankUpModal rank={showRankUp} onClose={() => setShowRankUp(null)} />}
+                    {achievementNotif && <AchievementNotification achievement={achievementNotif} onClose={() => setAchievementNotif(null)} />}
+                    
+                    {/* Mascot */}
+                    {currentUser !== 'Admin' && <RoboMascot mood={mascotMood} onClick={() => setMascotMood('happy')} />}
                 </div>
             );
         };
 
-        const App = () => {
-            const [db, setDb] = useState(() => { 
-                try {
-                    const saved = localStorage.getItem('robo_db_v2'); 
-                    let data = saved ? JSON.parse(saved) : {}; 
-                    return {
-                        users: Array.isArray(data.users) ? data.users : [],
-                        curriculum: Array.isArray(data.curriculum) ? data.curriculum : [],
-                        quizzes: data.quizzes || {},
-                        progress: data.progress || {}
-                    };
-                } catch (e) {
-                    return { users: [], curriculum: [], quizzes: {}, progress: {} };
-                }
-            });
-            const [currentUser, setCurrentUser] = useState(null);
-
-            useEffect(() => localStorage.setItem('robo_db_v2', JSON.stringify(db)), [db]);
-
-            const addUser = (name) => { if(!db.users.includes(name)) { setDb(prev => ({ ...prev, users: [...prev.users, name], progress: { ...prev.progress, [name]: { lessons: {}, quizzes: {}, cards: [] } } })); }};
-
-            return (
-                <ErrorBoundary>
-                    {!currentUser ? 
-                        <LoginScreen 
-                            users={db.users} 
-                            onSelectUser={setCurrentUser} 
-                            onAddUser={addUser} 
-                            onAdminLogin={() => { setCurrentUser('Admin'); }} 
-                            hasCurriculum={db.curriculum && db.curriculum.length > 0} 
-                        /> 
-                        : 
-                        <Game db={db} setDb={setDb} currentUser={currentUser} setCurrentUser={setCurrentUser} />
-                    }
-                </ErrorBoundary>
-            );
-        };
-
+        // RENDER THE APP
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
