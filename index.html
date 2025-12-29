@@ -372,6 +372,9 @@
             const [showAdminLogin, setShowAdminLogin] = useState(false);
             const handleAddUser = () => { if(newUserName.trim()) { onAddUser(newUserName.trim()); setNewUserName(""); setShowAddUser(false); }};
             const handleAdminCheck = () => { if(adminInput.toLowerCase() === ADMIN_PASS) onAdminLogin(); else alert("Zugriff verweigert!"); };
+            
+            // Maskottchen Image mit Fallback
+            const [mascotError, setMascotError] = useState(false);
 
             return (
                 <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-400 to-indigo-600 relative overflow-hidden">
@@ -380,13 +383,11 @@
                         
                         {/* HEADER MIT MASKOTTCHEN */}
                         <div className="w-32 h-32 mx-auto -mt-20 mb-4 drop-shadow-2xl hover:scale-110 transition-transform duration-300">
-                            <img src={MASCOT_IMAGE} className="w-full h-full object-contain" 
-                                 onError={(e) => {
-                                     // Fallback if image fails
-                                     e.target.style.display = 'none';
-                                     e.target.parentNode.innerHTML = '<div class="w-24 h-24 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-full flex items-center justify-center mx-auto shadow-lg border-4 border-white"><i class="fas fa-robot text-5xl text-white"></i></div>';
-                                 }} 
-                            />
+                            {mascotError ? (
+                                <div className="w-24 h-24 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-full flex items-center justify-center mx-auto shadow-lg border-4 border-white"><i class="fas fa-robot text-5xl text-white"></i></div>
+                            ) : (
+                                <img src={MASCOT_IMAGE} className="w-full h-full object-contain" onError={() => setMascotError(true)} />
+                            )}
                         </div>
                         
                         {/* OPTIONAL LOGO OR TEXT */}
@@ -459,22 +460,7 @@
         const AdminPanel = ({ db, onImportCurriculum, onImportBackup, onResetData, closeAdmin }) => {
             const fileInputRef = useRef();
             const backupInputRef = useRef();
-            const handleFileLoad = (e, callback) => { 
-                const file = e.target.files[0]; if (!file) return; 
-                const reader = new FileReader(); 
-                reader.onload = (event) => { 
-                    try { 
-                        const json = JSON.parse(event.target.result); 
-                        // Auto-Detection: Is it a Quiz or a Curriculum?
-                        if (json.seasonId && json.questions) {
-                            callback(json);
-                        } else {
-                            callback(json); 
-                        }
-                    } catch (err) { alert("Fehler: " + err.message); }
-                }; 
-                reader.readAsText(file); 
-            };
+            const handleFileLoad = (e, callback) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (event) => { try { const json = JSON.parse(event.target.result); callback(json); } catch (err) { alert("Fehler: " + err.message); }}; reader.readAsText(file); };
             const downloadBackup = () => { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db)); const downloadAnchorNode = document.createElement('a'); downloadAnchorNode.setAttribute("href", dataStr); downloadAnchorNode.setAttribute("download", "robo_backup.json"); document.body.appendChild(downloadAnchorNode); downloadAnchorNode.click(); downloadAnchorNode.remove(); };
 
             return (
@@ -510,8 +496,7 @@
             // Helper to calc XP and check for level up
             useEffect(() => {
                 if (!currentUser || currentUser === 'Admin') return;
-                const userProg = db.progress[currentUser];
-                if (!userProg) return;
+                const userProg = db.progress[currentUser] || { lessons: {}, quizzes: {}, cards: [] }; // Safety check for old data
                 
                 const completedLessons = userProg.lessons || {};
                 const completedQuizzes = userProg.quizzes || {};
@@ -644,7 +629,7 @@
                     </div>
                     <div className="max-w-3xl mx-auto p-4 space-y-8 mt-4">
                         {(!db.curriculum || db.curriculum.length === 0) && (<div className="text-center mt-20 text-slate-400"><div className="w-32 h-32 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4"><i className="fas fa-ghost text-5xl opacity-50"></i></div><h3 className="font-bold text-xl text-slate-600">Keine Quests verfügbar</h3><p className="text-sm">Papa muss das Training erst laden.</p></div>)}
-                        {db.curriculum.map((season) => {
+                        {db.curriculum && db.curriculum.map((season) => {
                             const allLessonsDone = season.lessons.every(l => completedLessons[l.id]);
                             const seasonQuiz = db.quizzes ? db.quizzes[season.id] : null;
                             const quizDone = seasonQuiz && completedQuizzes[seasonQuiz.id];
