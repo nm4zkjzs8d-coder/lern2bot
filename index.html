@@ -15,6 +15,7 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
     <style>
@@ -35,17 +36,22 @@
         @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .anim-pop { animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
         
-        @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-80px) scale(1.5); opacity: 0; } }
-        .anim-float { animation: floatUp 1.5s ease-out forwards; pointer-events: none; }
-
-        @keyframes spinSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .anim-spin-slow { animation: spinSlow 10s linear infinite; }
+        @keyframes floatUp { 
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } 
+            20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            80% { transform: translate(-50%, -150%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -200%) scale(0.8); opacity: 0; } 
+        }
+        .anim-xp-burst { animation: floatUp 2s ease-out forwards; pointer-events: none; position: fixed; top: 50%; left: 50%; }
 
         @keyframes mascotSlide { 0% { transform: translateY(100%) rotate(-10deg); } 100% { transform: translateY(0) rotate(0deg); } }
         .anim-mascot-in { animation: mascotSlide 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
         
         @keyframes rays { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .anim-rays { animation: rays 20s linear infinite; }
+
+        @keyframes shine { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
+        .anim-shine { background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%); background-size: 200% 100%; animation: shine 2s infinite; }
     </style>
 </head>
 <body>
@@ -55,8 +61,9 @@
         const { useState, useEffect, useRef } = React;
         const ADMIN_PASS = "papa";
 
-        // --- KONFIGURATION MASKOTTCHEN & RÄNGE ---
-        const MASCOT_IMAGE = "images/mascot.png"; // <-- HIER DEIN BILD EINTRAGEN (oder URL)
+        // --- KONFIGURATION BILDER ---
+        const MASCOT_IMAGE = "images/mascot.png"; 
+        const LOGO_IMAGE = "images/logo.png"; 
         
         const RANKS = [
             { xp: 0, title: "Robo-Novize", icon: "fa-baby-carriage", color: "slate" },
@@ -111,6 +118,47 @@
         const getCurrentRank = (xp) => {
             return [...RANKS].reverse().find(r => xp >= r.xp) || RANKS[0];
         };
+        const getNextRank = (xp) => {
+            return RANKS.find(r => r.xp > xp) || null;
+        };
+
+        // Hook for animating numbers
+        const useCountUp = (end, duration = 1000) => {
+            const [count, setCount] = useState(end); // Start with end to avoid 0 flash on load
+            const startRef = useRef(end);
+            
+            useEffect(() => {
+                let startTime = null;
+                const start = startRef.current;
+                if(start === end) return; // No change
+
+                const animate = (time) => {
+                    if (!startTime) startTime = time;
+                    const progress = time - startTime;
+                    const percentage = Math.min(progress / duration, 1);
+                    // Ease out quart
+                    const ease = 1 - Math.pow(1 - percentage, 4);
+                    
+                    setCount(Math.floor(start + (end - start) * ease));
+
+                    if (progress < duration) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        setCount(end);
+                        startRef.current = end;
+                    }
+                };
+                requestAnimationFrame(animate);
+            }, [end, duration]);
+
+            return count;
+        };
+
+        const triggerConfetti = () => {
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            }
+        };
 
         const HighlightCode = ({ text }) => {
             const parts = text.split(/('.*?')/g);
@@ -161,43 +209,46 @@
             );
         };
 
-        // --- NEW COMPONENTS FOR GAMIFICATION ---
+        // --- COMPONENTS FOR GAMIFICATION ---
 
         const XPFloater = ({ amount }) => {
             if (!amount) return null;
             return (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
-                    <div className="anim-float text-6xl font-black text-yellow-400 drop-shadow-[0_5px_5px_rgba(0,0,0,0.5)]">
-                        +{amount} XP
+                <div className="anim-xp-burst flex flex-col items-center justify-center z-[100]">
+                    <div className="text-7xl font-black text-yellow-400 drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)] tracking-tighter">
+                        +{amount}
+                    </div>
+                    <div className="text-2xl font-bold text-white uppercase tracking-widest mt-2 bg-yellow-500/80 px-4 py-1 rounded-full backdrop-blur-sm">
+                        Erfahrung
                     </div>
                 </div>
             );
         };
 
         const RankUpModal = ({ rank, onClose }) => {
+            useEffect(() => { triggerConfetti(); }, []);
             return (
                 <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 backdrop-blur overflow-hidden" onClick={onClose}>
-                    {/* Rotating Rays Background */}
                     <div className="absolute inset-0 flex items-center justify-center opacity-30">
                         <div className="w-[200vw] h-[200vw] bg-[conic-gradient(from_0deg,transparent_0deg,white_10deg,transparent_20deg)] anim-rays rounded-full"></div>
                     </div>
                     
                     <div className="relative z-10 text-center anim-pop p-8 max-w-lg w-full">
-                        <h2 className="text-5xl font-black text-yellow-400 mb-2 drop-shadow-lg uppercase italic transform -rotate-3">Level Up!</h2>
-                        <div className="bg-white/10 backdrop-blur-md border-4 border-white/30 rounded-3xl p-8 mb-8 relative">
-                            <div className={`w-32 h-32 mx-auto rounded-full bg-${rank.color}-500 flex items-center justify-center text-6xl text-white shadow-2xl mb-4 border-4 border-white`}>
+                        <h2 className="text-6xl font-black text-yellow-400 mb-4 drop-shadow-lg uppercase italic transform -rotate-3">LEVEL UP!</h2>
+                        <div className="bg-white/10 backdrop-blur-md border-4 border-white/30 rounded-3xl p-8 mb-8 relative shadow-[0_0_50px_rgba(255,255,255,0.2)]">
+                            <div className={`w-32 h-32 mx-auto rounded-full bg-${rank.color}-500 flex items-center justify-center text-6xl text-white shadow-2xl mb-4 border-4 border-white ring-4 ring-${rank.color}-300`}>
                                 <i className={`fas ${rank.icon}`}></i>
                             </div>
-                            <h3 className="text-3xl font-black text-white">{rank.title}</h3>
-                            <p className="text-blue-200 font-bold mt-2">Du hast {rank.xp} XP erreicht!</p>
+                            <h3 className="text-4xl font-black text-white mb-2">{rank.title}</h3>
+                            <p className="text-blue-200 font-bold text-lg">Du bist jetzt ein echter Profi!</p>
                         </div>
                         
-                        {/* Animated Mascot */}
-                        <div className="absolute -bottom-20 -right-10 w-48 anim-mascot-in transform rotate-12">
+                        {/* Mascot */}
+                        <div className="absolute -bottom-24 -right-12 w-56 anim-mascot-in transform rotate-6 hover:scale-110 transition-transform cursor-pointer" onClick={triggerConfetti}>
                             <img src={MASCOT_IMAGE} className="w-full drop-shadow-2xl" onError={(e) => e.target.style.display='none'} />
                         </div>
 
-                        <p className="text-white/70 text-sm animate-pulse">Tippen zum Fortfahren</p>
+                        <p className="text-white/70 text-sm animate-pulse mt-8">Tippen zum Fortfahren</p>
                     </div>
                 </div>
             );
@@ -221,6 +272,7 @@
                         setSelectedOption(null);
                     } else {
                         setShowResult(true);
+                        if (score + (correct ? 1 : 0) >= Math.ceil(quiz.questions.length * 0.7)) triggerConfetti();
                     }
                 }, 1500);
             };
@@ -324,10 +376,26 @@
             return (
                 <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-400 to-indigo-600 relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none"><i className="fas fa-microchip absolute top-10 left-10 text-9xl text-white animate-pulse"></i><i className="fas fa-bolt absolute bottom-20 right-10 text-8xl text-yellow-300"></i></div>
-                    <div className="bg-white/90 backdrop-blur-xl p-8 rounded-3xl shadow-2xl w-full max-w-md text-center relative z-10 anim-pop">
-                        <div className="w-24 h-24 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg border-4 border-white -mt-16"><i className="fas fa-robot text-5xl text-white"></i></div>
-                        <h1 className="text-3xl font-black text-slate-800 mb-1">ROBO LEAGUE</h1>
-                        <p className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-8">Wähle deinen Tamer</p>
+                    <div className="bg-white/90 backdrop-blur-xl p-8 rounded-3xl shadow-2xl w-full max-w-md text-center relative z-10 anim-pop border-4 border-white/50">
+                        
+                        {/* HEADER MIT MASKOTTCHEN */}
+                        <div className="w-32 h-32 mx-auto -mt-20 mb-4 drop-shadow-2xl hover:scale-110 transition-transform duration-300">
+                            <img src={MASCOT_IMAGE} className="w-full h-full object-contain" 
+                                 onError={(e) => {
+                                     // Fallback if image fails
+                                     e.target.style.display = 'none';
+                                     e.target.parentNode.innerHTML = '<div class="w-24 h-24 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-full flex items-center justify-center mx-auto shadow-lg border-4 border-white"><i class="fas fa-robot text-5xl text-white"></i></div>';
+                                 }} 
+                            />
+                        </div>
+                        
+                        {/* OPTIONAL LOGO OR TEXT */}
+                        <div className="mb-8">
+                            <img src={LOGO_IMAGE} className="max-w-[200px] mx-auto mb-2" onError={(e) => e.target.style.display='none'} />
+                            <h1 className="text-4xl font-black text-slate-800 mb-1" style={{display: "var(--show-title, block)"}}>ROBO LEAGUE</h1>
+                            <p className="text-slate-500 text-sm font-bold uppercase tracking-wider">Wähle deinen Tamer</p>
+                        </div>
+
                         {!hasCurriculum && <div className="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 rounded mb-6 text-sm text-left"><p className="font-bold">⚠ System Offline</p><p>Bitte Papa bitten, das Training zu laden.</p></div>}
                         <div className="grid grid-cols-2 gap-4 mb-6">
                             {users.map(user => (<button key={user} onClick={() => onSelectUser(user)} className="bg-white border-2 border-slate-100 hover:border-blue-400 hover:shadow-lg hover:-translate-y-1 transition-all p-4 rounded-2xl flex flex-col items-center gap-2 group"><div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl font-black group-hover:bg-blue-600 group-hover:text-white transition-colors">{user.charAt(0).toUpperCase()}</div><span className="font-bold text-slate-700">{user}</span></button>))}
@@ -529,13 +597,48 @@
             const unlockedCards = userProg.cards || [];
             const xp = (Object.keys(completedLessons).length * 100) + (Object.keys(completedQuizzes).length * 500);
             const currentRank = getCurrentRank(xp);
+            const nextRank = getNextRank(xp);
+            
+            // Calculate progress to next rank
+            let progressPercent = 100;
+            if (nextRank) {
+                const prevRankXP = currentRank.xp;
+                const xpInCurrentRank = xp - prevRankXP;
+                const xpNeededForNext = nextRank.xp - prevRankXP;
+                progressPercent = Math.min((xpInCurrentRank / xpNeededForNext) * 100, 100);
+            }
+
+            // Animated XP
+            const displayXP = useCountUp(xp, 1500);
 
             return (
                 <div className="min-h-screen pb-12 bg-slate-50">
                     <div className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-200 px-4 py-3 shadow-sm flex justify-between items-center">
-                        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setCurrentUser(null)}><div className="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-105 transition-transform"><i className="fas fa-chevron-left"></i></div><div><div className="text-xs text-blue-500 font-black uppercase tracking-wider">{currentUser === 'Admin' ? 'PAPA MODE' : currentRank.title.toUpperCase()}</div><div className="text-slate-800 font-black leading-none text-lg">Robo League</div></div></div>
+                        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setCurrentUser(null)}>
+                            <div className="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-105 transition-transform"><i className="fas fa-chevron-left"></i></div>
+                            <div>
+                                <div className="text-xs text-blue-500 font-black uppercase tracking-wider">{currentUser === 'Admin' ? 'PAPA MODE' : `TAMER ${currentUser.toUpperCase()}`}</div>
+                                <div className="text-slate-800 font-black leading-none text-lg">Robo League</div>
+                            </div>
+                        </div>
                         <div className="flex items-center gap-3">
-                            {currentUser !== 'Admin' && (<><button onClick={() => setShowDeck(true)} className="bg-slate-800 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg hover:scale-105 transition flex items-center gap-2"><i className="fas fa-layer-group text-yellow-400"></i> Deck</button><div className="bg-yellow-100 px-3 py-1 rounded-full border border-yellow-200 text-sm font-black text-yellow-600 flex items-center gap-2"><i className="fas fa-bolt"></i> {xp} XP</div></>)}
+                            {currentUser !== 'Admin' && (
+                                <div className="flex flex-col items-end">
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={() => setShowDeck(true)} className="bg-slate-800 text-white w-8 h-8 rounded-full text-xs font-bold shadow-lg hover:scale-105 transition flex items-center justify-center mr-2">
+                                            <i className="fas fa-layer-group text-yellow-400"></i>
+                                        </button>
+                                        <div className="bg-yellow-100 px-3 py-1 rounded-full border border-yellow-200 text-sm font-black text-yellow-600 flex items-center gap-2 w-28 justify-center">
+                                            <i className="fas fa-bolt"></i> {displayXP}
+                                        </div>
+                                    </div>
+                                    {nextRank && (
+                                        <div className="w-full h-1 bg-slate-200 rounded-full mt-1 overflow-hidden">
+                                            <div className="h-full bg-blue-500 transition-all duration-1000" style={{width: `${progressPercent}%`}}></div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             {currentUser === 'Admin' && <button onClick={() => setShowAdmin(true)} className="bg-slate-800 text-white px-3 py-1 rounded-lg text-sm font-bold">Admin</button>}
                         </div>
                     </div>
