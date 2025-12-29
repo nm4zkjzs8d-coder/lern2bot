@@ -120,7 +120,7 @@
             static getDerivedStateFromError(error) { return { hasError: true, error }; }
             componentDidCatch(error, errorInfo) { console.error("Crash:", error, errorInfo); }
             resetSystem = () => {
-                if(confirm("Daten löschen und neu starten?")) {
+                if(confirm("ACHTUNG: Dies löscht ALLE Daten um die App zu reparieren. Sicher?")) {
                     localStorage.removeItem('robo_db_v2');
                     window.location.reload();
                 }
@@ -129,10 +129,14 @@
                 if (this.state.hasError) {
                     return (
                         <div className="min-h-screen flex flex-col items-center justify-center bg-slate-900 text-white p-8 text-center font-sans">
+                            <div className="text-6xl mb-4 animate-bounce">🤖💥</div>
                             <h1 className="text-3xl font-black text-red-400 mb-4">Systemfehler!</h1>
-                            <p className="mb-4">Der Roboter ist gestolpert. Das passiert manchmal bei Updates.</p>
-                            <button onClick={this.resetSystem} className="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-xl">
-                                System Reparieren (Reset)
+                            <p className="mb-8 text-slate-300">Der Roboter ist gestolpert. Das passiert manchmal bei Updates.<br/>Keine Panik!</p>
+                            <div className="bg-slate-800 p-4 rounded text-xs text-left mb-8 font-mono text-red-300 max-w-lg w-full border border-red-900 overflow-auto max-h-32">
+                                {this.state.error && this.state.error.toString()}
+                            </div>
+                            <button onClick={this.resetSystem} className="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg border-b-4 border-red-700 active:border-b-0 active:translate-y-1 transition-all">
+                                <i className="fas fa-wrench mr-2"></i> System Reparieren (Reset)
                             </button>
                         </div>
                     );
@@ -199,6 +203,7 @@
                     <div className={`${sizeClasses} aspect-card bg-slate-200 rounded-xl border-4 border-slate-300 flex flex-col items-center justify-center relative overflow-hidden shadow-inner`}>
                         <i className="fas fa-lock text-4xl text-slate-400 mb-2"></i>
                         <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">Gesperrt</span>
+                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
                         <div className="absolute bottom-2 text-[10px] text-slate-400">Card #{cardId.substring(1)}</div>
                     </div>
                 );
@@ -216,17 +221,21 @@
             );
         };
 
-        const XPFloater = ({ amount }) => !amount ? null : (
-            <div className="anim-xp-burst flex flex-col items-center justify-center z-[100]">
-                <div className="text-7xl font-black text-yellow-400 drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)] tracking-tighter">+{amount}</div>
-                <div className="text-2xl font-bold text-white uppercase tracking-widest mt-2 bg-yellow-500/80 px-4 py-1 rounded-full backdrop-blur-sm">Erfahrung</div>
-            </div>
-        );
+        const XPFloater = ({ amount }) => {
+            if (!amount) return null;
+            return (
+                <div className="anim-xp-burst flex flex-col items-center justify-center z-[100]">
+                    <div className="text-7xl font-black text-yellow-400 drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)] tracking-tighter">+{amount}</div>
+                    <div className="text-2xl font-bold text-white uppercase tracking-widest mt-2 bg-yellow-500/80 px-4 py-1 rounded-full backdrop-blur-sm">Erfahrung</div>
+                </div>
+            );
+        };
 
         const RankUpModal = ({ rank, onClose }) => {
             useEffect(() => { triggerConfetti(); }, []);
             return (
                 <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 backdrop-blur overflow-hidden" onClick={onClose}>
+                    <div className="absolute inset-0 flex items-center justify-center opacity-30"><div className="w-[200vw] h-[200vw] bg-[conic-gradient(from_0deg,transparent_0deg,white_10deg,transparent_20deg)] anim-rays rounded-full"></div></div>
                     <div className="relative z-10 text-center anim-pop p-8 max-w-lg w-full">
                         <h2 className="text-6xl font-black text-yellow-400 mb-4 drop-shadow-lg uppercase italic transform -rotate-3">LEVEL UP!</h2>
                         <div className="bg-white/10 backdrop-blur-md border-4 border-white/30 rounded-3xl p-8 mb-8 relative shadow-[0_0_50px_rgba(255,255,255,0.2)]">
@@ -234,6 +243,7 @@
                             <h3 className="text-4xl font-black text-white mb-2">{rank.title}</h3>
                             <p className="text-blue-200 font-bold text-lg">Du bist jetzt ein echter Profi!</p>
                         </div>
+                        <div className="absolute -bottom-24 -right-12 w-56 anim-mascot-in transform rotate-6 hover:scale-110 transition-transform cursor-pointer" onClick={triggerConfetti}><img src={MASCOT_IMAGE} className="w-full drop-shadow-2xl" onError={(e) => e.target.style.display='none'} /></div>
                         <p className="text-white/70 text-sm animate-pulse mt-8">Tippen zum Fortfahren</p>
                     </div>
                 </div>
@@ -262,9 +272,11 @@
                 return (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur p-4 anim-pop">
                         <div className="bg-white p-8 rounded-3xl max-w-md w-full text-center relative overflow-hidden">
-                            <h2 className="text-3xl font-black text-slate-800 mb-2">{passed ? "Bestanden!" : "Nicht bestanden"}</h2>
-                            <p className="text-slate-500 mb-6 font-bold">{score} / {quiz.questions.length} Richtig</p>
-                            <button onClick={() => onFinish(passed, score)} className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white font-black rounded-xl shadow-lg">Weiter</button>
+                            <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 ${passed ? 'bg-green-100 text-green-500' : 'bg-red-100 text-red-500'}`}><i className={`fas ${passed ? 'fa-trophy' : 'fa-times'} text-5xl`}></i></div>
+                            <h2 className="text-3xl font-black text-slate-800 mb-2">{passed ? "Prüfung bestanden!" : "Leider durchgefallen"}</h2>
+                            <p className="text-slate-500 mb-6 font-bold">{score} von {quiz.questions.length} Fragen richtig.</p>
+                            {passed && (<div className="absolute bottom-0 right-0 w-32 anim-mascot-in opacity-50"><img src={MASCOT_IMAGE} onError={(e)=>e.target.style.display='none'} /></div>)}
+                            <button onClick={() => onFinish(passed, score)} className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white font-black rounded-xl shadow-lg btn-bounce relative z-10">{passed ? "Urkunde abholen" : "Nochmal versuchen"}</button>
                         </div>
                     </div>
                 );
@@ -273,8 +285,9 @@
             return (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/95 backdrop-blur p-4">
                     <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[80vh] anim-pop">
-                        <div className="p-6 bg-slate-800 text-white flex justify-between items-center"><div><span className="text-xs font-black uppercase text-blue-400 tracking-wider">Quiz</span></div><button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center"><i className="fas fa-times"></i></button></div>
+                        <div className="p-6 bg-slate-800 text-white flex justify-between items-center"><div><span className="text-xs font-black uppercase text-blue-400 tracking-wider">Quiz: {quiz.title}</span><div className="text-sm font-bold text-slate-400">Frage {currentQ + 1} von {quiz.questions.length}</div></div><button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center"><i className="fas fa-times"></i></button></div>
                         <div className="flex-1 p-8 flex flex-col justify-center bg-slate-50"><h2 className="text-2xl font-black text-slate-800 mb-8 text-center leading-tight">{q.q}</h2><div className="space-y-4">{q.options.map((opt, idx) => { let btnClass = "bg-white border-2 border-slate-200 text-slate-600 hover:border-blue-400 hover:text-blue-600"; if (selectedOption !== null) { if (idx === q.correct) btnClass = "bg-green-500 border-green-500 text-white"; else if (idx === selectedOption) btnClass = "bg-red-500 border-red-500 text-white"; else btnClass = "bg-slate-100 border-slate-200 text-slate-400 opacity-50"; } return <button key={idx} onClick={() => handleAnswer(idx)} disabled={selectedOption !== null} className={`w-full p-5 rounded-2xl font-bold text-lg text-left transition-all duration-200 shadow-sm ${btnClass}`}><span className="inline-block w-8 font-black opacity-50">{String.fromCharCode(65+idx)}.</span> {opt}</button>; })}</div></div>
+                        <div className="h-2 bg-slate-200 w-full"><div className="h-full bg-blue-500 transition-all duration-500" style={{width: `${((currentQ) / quiz.questions.length) * 100}%`}}></div></div>
                     </div>
                 </div>
             );
@@ -314,32 +327,54 @@
             );
         };
 
-        const LoginScreen = ({ users, onSelectUser, onAddUser, onAdminLogin, hasCurriculum }) => {
-            const [newUserName, setNewUserName] = useState("");
-            const [showAddUser, setShowAddUser] = useState(false);
-            const [adminInput, setAdminInput] = useState("");
-            const [showAdminLogin, setShowAdminLogin] = useState(false);
-            const handleAddUser = () => { if(newUserName.trim()) { onAddUser(newUserName.trim()); setNewUserName(""); setShowAddUser(false); }};
-            const handleAdminCheck = () => { if(adminInput.toLowerCase() === ADMIN_PASS) onAdminLogin(); else alert("Zugriff verweigert!"); };
-            const [mascotError, setMascotError] = useState(false);
+        const LessonModal = ({ lesson, onClose, onComplete, isAdmin }) => {
+            const [tab, setTab] = useState('setup');
+            const [checks, setChecks] = useState({setup: {}, steps: {}});
+            const [photo, setPhoto] = useState(null);
+
+            const setupList = lesson.setup || [];
+            const stepsList = lesson.steps || [];
+
+            const allSetup = setupList.every((_, i) => checks.setup[i]);
+            const allSteps = stepsList.every((_, i) => checks.steps[i]);
+            const canFinish = (allSetup && allSteps && (!lesson.needsPhoto || photo)) || isAdmin;
 
             return (
-                <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-400 to-indigo-600 relative overflow-hidden">
-                    <div className="bg-white/90 backdrop-blur-xl p-8 rounded-3xl shadow-2xl w-full max-w-md text-center relative z-10 anim-pop border-4 border-white/50">
-                        <div className="w-32 h-32 mx-auto -mt-20 mb-4 drop-shadow-2xl hover:scale-110 transition-transform duration-300">
-                            {mascotError ? <div className="w-24 h-24 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-full flex items-center justify-center mx-auto shadow-lg border-4 border-white"><i class="fas fa-robot text-5xl text-white"></i></div> : <img src={MASCOT_IMAGE} className="w-full h-full object-contain" onError={() => setMascotError(true)} />}
+                <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center p-0 sm:p-6 bg-slate-900/60 backdrop-blur-sm">
+                    <div className="bg-white w-full max-w-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col anim-pop overflow-hidden">
+                        <div className={`p-6 ${lesson.type === 'boss' ? 'bg-gradient-to-r from-purple-600 to-indigo-600' : 'bg-gradient-to-r from-blue-500 to-cyan-500'} text-white flex justify-between items-start shrink-0 relative overflow-hidden`}>
+                            <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/20 rounded-full blur-2xl"></div>
+                            <div className="relative z-10"><span className="inline-block bg-black/20 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-2">Level {lesson.id}</span><h2 className="text-2xl font-black leading-tight max-w-[80%]">{lesson.title}</h2></div>
+                            <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors btn-bounce relative z-10"><i className="fas fa-times text-lg"></i></button>
                         </div>
-                        <div className="mb-8">
-                            <img src={LOGO_IMAGE} className="max-w-[200px] mx-auto mb-2" onError={(e) => e.target.style.display='none'} />
-                            <h1 className="text-4xl font-black text-slate-800 mb-1">ROBO LEAGUE</h1>
-                            <p className="text-slate-500 text-sm font-bold uppercase tracking-wider">Wähle deinen Tamer</p>
+                        <div className="flex border-b border-slate-100 bg-white shrink-0 p-2 gap-2">
+                            <button onClick={() => setTab('setup')} className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase transition-all ${tab==='setup'?'bg-blue-50 text-blue-600 ring-2 ring-blue-100':'text-slate-400 hover:bg-slate-50'}`}>1. Check</button>
+                            <button onClick={() => setTab('steps')} disabled={!allSetup && !isAdmin} className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase transition-all ${tab==='steps'?'bg-blue-50 text-blue-600 ring-2 ring-blue-100':(!allSetup && !isAdmin ?'opacity-50 cursor-not-allowed text-slate-300':'text-slate-400 hover:bg-slate-50')}`}>2. Training</button>
+                            {lesson.sos && <button onClick={() => setTab('sos')} className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase transition-all ${tab==='sos'?'bg-red-50 text-red-500 ring-2 ring-red-100':'text-slate-400 hover:bg-slate-50'}`}>Hilfe!</button>}
                         </div>
-                        {!hasCurriculum && <div className="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 rounded mb-6 text-sm text-left"><p className="font-bold">⚠ System Offline</p><p>Bitte Papa bitten, das Training zu laden.</p></div>}
-                        <div className="grid grid-cols-2 gap-4 mb-6">
-                            {users.map(user => (<button key={user} onClick={() => onSelectUser(user)} className="bg-white border-2 border-slate-100 hover:border-blue-400 hover:shadow-lg hover:-translate-y-1 transition-all p-4 rounded-2xl flex flex-col items-center gap-2 group"><div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl font-black group-hover:bg-blue-600 group-hover:text-white transition-colors">{user.charAt(0).toUpperCase()}</div><span className="font-bold text-slate-700">{user}</span></button>))}
-                            {!showAddUser ? (<button onClick={() => setShowAddUser(true)} className="border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 text-slate-400 hover:text-blue-500 transition-all p-4 rounded-2xl flex flex-col items-center gap-2"><div className="w-12 h-12 flex items-center justify-center"><i className="fas fa-plus text-2xl"></i></div><span className="font-bold text-sm">Neuer Spieler</span></button>) : (<div className="col-span-2 bg-slate-50 p-3 rounded-2xl border border-blue-200"><input type="text" value={newUserName} onChange={e => setNewUserName(e.target.value)} placeholder="Dein Name" className="w-full bg-white border border-slate-300 rounded-lg p-2 text-center font-bold text-slate-700 mb-2 focus:ring-2 focus:ring-blue-400 outline-none" autoFocus /><div className="flex gap-2"><button onClick={handleAddUser} className="flex-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-1 font-bold shadow">Start</button><button onClick={() => setShowAddUser(false)} className="px-3 text-slate-400 font-bold hover:text-slate-600">X</button></div></div>)}
+                        <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
+                            {tab === 'setup' && (
+                                <div className="space-y-4">
+                                    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-start gap-4"><div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0"><i className="fas fa-clipboard-check"></i></div><div><h3 className="font-bold text-slate-800">System-Check</h3><p className="text-sm text-slate-500">Ist dein Partner bereit?</p></div></div>
+                                    {setupList.map((t, i) => (<label key={i} className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${checks.setup[i] ? 'bg-green-50 border-green-400' : 'bg-white border-slate-200 hover:border-blue-300'}`}><input type="checkbox" className="custom-checkbox hidden" checked={!!checks.setup[i]} onChange={() => setChecks(p => ({...p, setup: {...p.setup, [i]: !p.setup[i]}}))} /><div className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center shrink-0 font-bold transition-colors ${checks.setup[i] ? 'bg-green-500 border-green-500 text-white' : 'bg-slate-100 border-slate-300 text-transparent'}`}><i className="fas fa-check"></i></div><span className={`font-bold ${checks.setup[i] ? 'text-green-700 line-through opacity-70' : 'text-slate-700'}`}>{t}</span></label>))}
+                                    {(allSetup || isAdmin) && (<button onClick={() => setTab('steps')} className="w-full py-4 bg-blue-500 text-white font-black text-lg rounded-2xl shadow-lg shadow-blue-500/30 btn-bounce mt-4 flex items-center justify-center gap-2">Start Training <i className="fas fa-arrow-right"></i></button>)}
+                                </div>
+                            )}
+                            {tab === 'steps' && (
+                                <div className="space-y-6">
+                                    <div className="bg-white p-5 rounded-2xl border-l-8 border-yellow-400 shadow-sm"><h3 className="text-slate-400 text-xs font-black uppercase tracking-wider mb-1">Missionsziel</h3><p className="text-slate-800 text-lg font-bold">{lesson.goal}</p></div>
+                                    {stepsList.map((s, i) => (<div key={i} className={`p-4 rounded-2xl border-2 transition-all ${checks.steps[i] ? 'bg-green-50 border-green-200 opacity-60' : 'bg-white border-slate-200 shadow-sm'}`}><div className="flex gap-4"><div className="flex flex-col items-center gap-2"><div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-black ${checks.steps[i] ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-500'}`}>{i+1}</div><input type="checkbox" className="w-8 h-8 accent-green-500" checked={!!checks.steps[i]} onChange={() => setChecks(p => ({...p, steps: {...p.steps, [i]: !p.steps[i]}}))} /></div><div className="flex-1 pt-1"><div className="text-slate-700 font-medium text-lg leading-relaxed"><HighlightCode text={s.text} /></div>{s.hint && <div className="mt-3 text-sm text-slate-600 bg-yellow-50 p-3 rounded-xl border border-yellow-100 flex gap-3"><i className="fas fa-lightbulb text-yellow-500 mt-1"></i><span>{s.hint}</span></div>}</div></div></div>))}
+                                    {lesson.needsPhoto && (<div className="mt-8"><h3 className="font-black text-slate-700 mb-3 flex items-center gap-2"><i className="fas fa-camera text-blue-500"></i> Beweis-Foto</h3>{photo ? (<div className="relative rounded-2xl overflow-hidden shadow-lg group"><img src={photo} className="w-full h-48 object-cover" /><button onClick={() => setPhoto(null)} className="absolute top-2 right-2 bg-red-500 text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center"><i className="fas fa-trash"></i></button><div className="absolute bottom-0 w-full bg-green-500 text-white text-center py-1 text-xs font-bold">GESPEICHERT</div></div>) : (<label className="block w-full py-8 border-4 border-dashed border-blue-200 rounded-3xl text-center cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-all group"><div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-500 group-hover:scale-110 transition-transform"><i className="fas fa-camera text-2xl"></i></div><div className="text-blue-500 font-bold">Foto aufnehmen</div><input type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files[0]){const r = new FileReader(); r.onload=()=>setPhoto(r.result); r.readAsDataURL(e.target.files[0]);}}} /></label>)}</div>)}
+                                </div>
+                            )}
+                            {tab === 'sos' && (
+                                <div className="space-y-4">
+                                    <div className="bg-red-50 p-4 rounded-2xl border border-red-100 flex items-center gap-3 text-red-600 font-bold"><i className="fas fa-kit-medical text-2xl"></i><span>Erste Hilfe Kasten</span></div>
+                                    {lesson.sos && lesson.sos.map((item, i) => (<div key={i} className="bg-white border border-red-100 p-5 rounded-2xl shadow-sm"><div className="font-bold text-red-500 mb-2 flex items-center gap-2"><i className="fas fa-circle-question"></i> {item.problem}</div><div className="text-slate-600 pl-6 text-sm leading-relaxed">{item.solution}</div></div>))}
+                                </div>
+                            )}
                         </div>
-                        <div className="flex justify-center">{!showAdminLogin ? (<button onClick={() => setShowAdminLogin(true)} className="text-slate-300 hover:text-slate-400 transition"><i className="fas fa-user-shield"></i></button>) : (<div className="flex gap-2 bg-slate-100 p-1 rounded-full border border-slate-200"><input type="password" value={adminInput} onChange={e => setAdminInput(e.target.value)} placeholder="Code" className="w-20 bg-transparent text-center text-xs outline-none" /><button onClick={handleAdminCheck} className="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center text-xs"><i className="fas fa-arrow-right"></i></button></div>)}</div>
+                        <div className="p-4 border-t border-slate-100 bg-white shrink-0"><button onClick={onComplete} disabled={!canFinish} className={`w-full py-4 rounded-2xl font-black text-xl shadow-lg btn-bounce flex items-center justify-center gap-3 transition-all ${canFinish ? 'bg-gradient-to-r from-green-400 to-green-600 text-white shadow-green-500/30' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}>{canFinish ? <span><i className="fas fa-check-circle"></i> QUEST ABGESCHLOSSEN!</span> : <span><i className="fas fa-lock"></i> ERST ALLES ABHAKEN</span>}</button></div>
                     </div>
                 </div>
             );
@@ -359,6 +394,37 @@
                             <div className="bg-green-50 p-6 rounded-2xl border border-green-100"><h3 className="font-bold text-green-800 mb-2">2. Backup</h3><div className="flex gap-4"><button onClick={downloadBackup} className="flex-1 bg-green-500 text-white font-bold py-3 rounded-xl hover:bg-green-600 shadow-lg shadow-green-500/20">Speichern</button><input type="file" accept=".json" ref={backupInputRef} className="hidden" onChange={(e) => handleFileLoad(e, onImportBackup)} /><button onClick={() => backupInputRef.current.click()} className="flex-1 bg-white border-2 border-green-500 text-green-600 font-bold py-3 rounded-xl hover:bg-green-50">Laden</button></div></div>
                             <div className="border-t pt-6"><button onClick={() => { if(confirm("ALLES löschen?")) onResetData(); }} className="text-red-400 text-sm font-bold hover:text-red-600">App komplett zurücksetzen</button></div>
                         </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const LoginScreen = ({ users, onSelectUser, onAddUser, onAdminLogin, hasCurriculum }) => {
+            const [newUserName, setNewUserName] = useState("");
+            const [showAddUser, setShowAddUser] = useState(false);
+            const [adminInput, setAdminInput] = useState("");
+            const [showAdminLogin, setShowAdminLogin] = useState(false);
+            const handleAddUser = () => { if(newUserName.trim()) { onAddUser(newUserName.trim()); setNewUserName(""); setShowAddUser(false); }};
+            const handleAdminCheck = () => { if(adminInput.toLowerCase() === ADMIN_PASS) onAdminLogin(); else alert("Zugriff verweigert!"); };
+            const [mascotError, setMascotError] = useState(false);
+
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-400 to-indigo-600 relative overflow-hidden">
+                    <div className="bg-white/90 backdrop-blur-xl p-8 rounded-3xl shadow-2xl w-full max-w-md text-center relative z-10 anim-pop border-4 border-white/50">
+                        <div className="w-32 h-32 mx-auto -mt-20 mb-4 drop-shadow-2xl hover:scale-110 transition-transform duration-300">
+                            {mascotError ? <div className="w-24 h-24 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-full flex items-center justify-center mx-auto shadow-lg border-4 border-white"><i className="fas fa-robot text-5xl text-white"></i></div> : <img src={MASCOT_IMAGE} className="w-full h-full object-contain" onError={() => setMascotError(true)} />}
+                        </div>
+                        <div className="mb-8">
+                            <img src={LOGO_IMAGE} className="max-w-[200px] mx-auto mb-2" onError={(e) => e.target.style.display='none'} />
+                            <h1 className="text-4xl font-black text-slate-800 mb-1">ROBO LEAGUE</h1>
+                            <p className="text-slate-500 text-sm font-bold uppercase tracking-wider">Wähle deinen Tamer</p>
+                        </div>
+                        {!hasCurriculum && <div className="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 rounded mb-6 text-sm text-left"><p className="font-bold">⚠ System Offline</p><p>Bitte Papa bitten, das Training zu laden.</p></div>}
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                            {users.map(user => (<button key={user} onClick={() => onSelectUser(user)} className="bg-white border-2 border-slate-100 hover:border-blue-400 hover:shadow-lg hover:-translate-y-1 transition-all p-4 rounded-2xl flex flex-col items-center gap-2 group"><div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl font-black group-hover:bg-blue-600 group-hover:text-white transition-colors">{user.charAt(0).toUpperCase()}</div><span className="font-bold text-slate-700">{user}</span></button>))}
+                            {!showAddUser ? (<button onClick={() => setShowAddUser(true)} className="border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 text-slate-400 hover:text-blue-500 transition-all p-4 rounded-2xl flex flex-col items-center gap-2"><div className="w-12 h-12 flex items-center justify-center"><i className="fas fa-plus text-2xl"></i></div><span className="font-bold text-sm">Neuer Spieler</span></button>) : (<div className="col-span-2 bg-slate-50 p-3 rounded-2xl border border-blue-200"><input type="text" value={newUserName} onChange={e => setNewUserName(e.target.value)} placeholder="Dein Name" className="w-full bg-white border border-slate-300 rounded-lg p-2 text-center font-bold text-slate-700 mb-2 focus:ring-2 focus:ring-blue-400 outline-none" autoFocus /><div className="flex gap-2"><button onClick={handleAddUser} className="flex-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-1 font-bold shadow">Start</button><button onClick={() => setShowAddUser(false)} className="px-3 text-slate-400 font-bold hover:text-slate-600">X</button></div></div>)}
+                        </div>
+                        <div className="flex justify-center">{!showAdminLogin ? (<button onClick={() => setShowAdminLogin(true)} className="text-slate-300 hover:text-slate-400 transition"><i className="fas fa-user-shield"></i></button>) : (<div className="flex gap-2 bg-slate-100 p-1 rounded-full border border-slate-200"><input type="password" value={adminInput} onChange={e => setAdminInput(e.target.value)} placeholder="Code" className="w-20 bg-transparent text-center text-xs outline-none" /><button onClick={handleAdminCheck} className="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center text-xs"><i className="fas fa-arrow-right"></i></button></div>)}</div>
                     </div>
                 </div>
             );
