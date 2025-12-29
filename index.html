@@ -1,283 +1,381 @@
-[
-  {
-    "id": "s3",
-    "title": "Season 3: Die Fledermaus",
-    "description": "Aktiviere die Sensoren! Dein Mecha lernt zu 'sehen', Hindernisse zu erkennen und autonom zu reagieren.",
-    "color": "indigo",
-    "icon": "fa-wifi",
-    "lessons": [
-      {
-        "id": 21,
-        "title": "Sonar Aktivierung",
-        "type": "normal",
-        "goal": "Wir testen die Augen. Der Roboter soll den Abstand zu deiner Hand auf dem Display anzeigen.",
-        "setup": [
-          "Schau dir die 'Augen' (Ultraschall-Sensor) vorne an.",
-          "Ist das Kabel fest?"
-        ],
-        "steps": [
-          {
-            "text": "Nimm eine 'fortlaufend' Schleife.",
-            "hint": "Wir müssen dauernd messen."
-          },
-          {
-            "text": "Suche in FÜHLEN (Türkis): 'Ultraschall 2 Abstand zu Objekt'.",
-            "hint": "Der Block ist rund, weil er eine Zahl (cm) liefert."
-          },
-          {
-            "text": "Nutze 'LED-Anzeige schreibt Text ...' (Optik) und ziehe den Sensor-Block hinein.",
-            "hint": ""
-          },
-          {
-            "text": "Starte und halte die Hand davor. Ändert sich die Zahl?",
-            "hint": "Bewege die Hand vor und zurück."
-          }
-        ],
-        "sos": [
-          {
-            "problem": "Zeigt immer 0 oder 300?",
-            "solution": "Kabel prüfen! Oder du bist zu nah (unter 3cm) oder zu weit weg (über 3m)."
-          }
-        ]
-      },
-      {
-        "id": 22,
-        "title": "Schutzschild (Notbremse)",
-        "type": "normal",
-        "goal": "Fahre vorwärts, aber stoppe SOFORT, wenn ein Hindernis näher als 15cm ist.",
-        "setup": [
-          "Stelle eine Kiste/Buch als Wand auf."
-        ],
-        "steps": [
-          {
-            "text": "Schleife 'fortlaufend'.",
-            "hint": ""
-          },
-          {
-            "text": "Nimm 'falls ... dann ... sonst'.",
-            "hint": ""
-          },
-          {
-            "text": "Bedingung: 'Ultraschall Abstand < 15' (Grüner Operator <).",
-            "hint": "Verbinde den Sensor-Block mit dem Kleiner-Als Block."
-          },
-          {
-            "text": "Bei DANN: 'stoppe Bewegung' (Chassis) + LED Rot.",
-            "hint": "Gefahr erkannt!"
-          },
-          {
-            "text": "Bei SONST: 'bewege vorwärts' + LED Grün.",
-            "hint": "Freie Fahrt."
-          }
-        ],
-        "sos": []
-      },
-      {
-        "id": 23,
-        "title": "Blaue Augen",
-        "type": "normal",
-        "goal": "Wusstest du, dass die Sensor-Augen leuchten können? Steuere sie an!",
-        "setup": [],
-        "steps": [
-          {
-            "text": "Suche bei OPTIK (ganz unten bei Erweiterungen) nach 'Ultraschall 2'.",
-            "hint": "Manchmal musst du erst die Erweiterung 'Ultraschall 2' unten links (+) hinzufügen."
-          },
-          {
-            "text": "Nimm 'Setze Helligkeit von Ultraschall...'.",
-            "hint": ""
-          },
-          {
-            "text": "Baue ein Programm: Wenn Distanz < 10 -> Augen AN. Sonst -> Augen AUS.",
-            "hint": "Wie ein Warnlicht."
-          }
-        ],
-        "sos": [
-          {
-            "problem": "Finde den Block nicht?",
-            "solution": "Er versteckt sich oft. Wenn du ihn nicht findest, nutze einfach die normalen LEDs am Roboter-Heck."
-          }
-        ]
-      },
-      {
-        "id": 24,
-        "title": "Der Nachtwächter",
-        "type": "challenge",
-        "reward": "c9",
-        "goal": "Der Roboter steht still. Sobald sich etwas bewegt (Abstand ändert sich), schlägt er Alarm!",
-        "setup": [
-          "Stell ihn vor deine Zimmertür."
-        ],
-        "steps": [
-          {
-            "text": "Logik: 'Warte bis < (Abstand < 50)'.",
-            "hint": "Der Block 'warte bis' (Steuerung) pausiert das Programm, bis etwas passiert."
-          },
-          {
-            "text": "Danach: Spiele Sound 'Sirene' + Rote Lichter.",
-            "hint": ""
-          },
-          {
-            "text": "Teste es: Schleich dich an ihn ran!",
-            "hint": "Erwischt!"
-          }
-        ],
-        "sos": [],
-        "needsPhoto": true
-      },
-      {
-        "id": 25,
-        "title": "Schreckhafter Mecha",
-        "type": "normal",
-        "goal": "Wenn du ihm zu nahe kommst (< 10cm), soll er schnell rückwärts flüchten.",
-        "setup": [],
-        "steps": [
-          {
-            "text": "Fortlaufend prüfen: Ist Abstand < 10?",
-            "hint": ""
-          },
-          {
-            "text": "Wenn JA: Bewege rückwärts (schnell!) + Spiele Sound 'Oh oh'.",
-            "hint": ""
-          },
-          {
-            "text": "Wenn NEIN: Stoppe Bewegung.",
-            "hint": "Er soll nur fahren, wenn er Angst hat."
-          }
-        ],
-        "sos": []
-      },
-      {
-        "id": 26,
-        "title": "Einpark-Hilfe",
-        "type": "normal",
-        "goal": "Baue einen Sensor wie im Auto. Je näher, desto schneller piept er.",
-        "setup": [
-          "Fahre mit der Hand langsam auf ihn zu."
-        ],
-        "steps": [
-          {
-            "text": "Das ist Profi-Logik! Wir nutzen verschachtelte 'Falls'.",
-            "hint": "Falls < 5: Hoher Ton. Sonst: Falls < 20: Tiefer Ton."
-          },
-          {
-            "text": "Oder einfacher: Mache 3 'Falls'-Blöcke untereinander.",
-            "hint": ""
-          },
-          {
-            "text": "1. Falls < 5 -> Note C6 (0.1 Sek).",
-            "hint": "Sehr schnell/hoch."
-          },
-          {
-            "text": "2. Falls < 15 und > 5 -> Note C4 (0.5 Sek).",
-            "hint": "Mittel."
-          }
-        ],
-        "sos": []
-      },
-      {
-        "id": 27,
-        "title": "Der Verfolger (Haustier)",
-        "type": "normal",
-        "goal": "Der Roboter soll deiner Hand folgen. Zu weit weg -> Vorwärts. Zu nah -> Rückwärts.",
-        "setup": [
-          "Boden!"
-        ],
-        "steps": [
-          {
-            "text": "Wir definieren eine 'Wohlfühl-Zone' (z.B. 15cm).",
-            "hint": ""
-          },
-          {
-            "text": "Falls Abstand > 20: Fahre Vorwärts.",
-            "hint": "Komm her!"
-          },
-          {
-            "text": "Falls Abstand < 10: Fahre Rückwärts.",
-            "hint": "Zu nah!"
-          },
-          {
-            "text": "Sonst (dazwischen): Stopp.",
-            "hint": "Perfekter Abstand."
-          }
-        ],
-        "sos": [
-          {
-            "problem": "Er zuckelt nur?",
-            "solution": "Mach die 'Wohlfühl-Zone' größer (zwischen 10 und 25). Wenn der Bereich zu klein ist, kann er sich nicht entscheiden."
-          }
-        ]
-      },
-      {
-        "id": 28,
-        "title": "Autopilot V1",
-        "type": "normal",
-        "goal": "Der Roboter fährt geradeaus. Wenn eine Wand kommt, dreht er sich automatisch weg.",
-        "setup": [
-          "Baue eine Sackgasse oder Ecke."
-        ],
-        "steps": [
-          {
-            "text": "Starte 'vorwärts fahren' (ohne Zeit, einfach an).",
-            "hint": ""
-          },
-          {
-            "text": "Schleife: 'Warte bis < (Abstand < 15)'.",
-            "hint": "Er fährt solange weiter, bis die Wand kommt."
-          },
-          {
-            "text": "Dann: Stoppe -> Drehe Rechts (0.5 Sek) -> Fahre weiter.",
-            "hint": "Packe das Ganze in eine 'fortlaufend' Schleife für unendliches Fahren."
-          }
-        ],
-        "sos": []
-      },
-      {
-        "id": 29,
-        "title": "Ping Pong",
-        "type": "normal",
-        "goal": "Der Roboter fährt zwischen zwei Wänden hin und her.",
-        "setup": [
-          "Stelle zwei Bücher ca. 1m auseinander."
-        ],
-        "steps": [
-          {
-            "text": "Kombiniere dein Wissen.",
-            "hint": ""
-          },
-          {
-            "text": "Fahre Vorwärts bis Wand -> Drehe 180 Grad -> Fahre wieder Vorwärts.",
-            "hint": "180 Grad Drehung dauert ca. 1.2 bis 1.5 Sekunden (testen!)."
-          }
-        ],
-        "sos": []
-      },
-      {
-        "id": 30,
-        "title": "BOSS: Das Labyrinth",
-        "type": "boss",
-        "reward": "c10",
-        "goal": "Setze den Roboter in ein Labyrinth (Karton). Er muss selbstständig herumfahren, ohne anzustoßen.",
-        "setup": [
-          "Baue eine Arena aus Büchern/Kartons."
-        ],
-        "steps": [
-          {
-            "text": "Programmieren den 'Roomba-Modus'.",
-            "hint": "Er fährt, erkennt Hindernis, dreht sich (zufällig oder fest), fährt weiter."
-          },
-          {
-            "text": "Extra-Challenge: Kann er auch rückwärts aus einer Ecke rauskommen?",
-            "hint": "Wenn Abstand < 5 -> Rückwärts fahren -> Dann drehen."
-          },
-          {
-            "text": "Lass ihn 30 Sekunden ohne Crash fahren.",
-            "hint": ""
-          }
-        ],
-        "sos": [],
-        "needsPhoto": true
-      }
-    ]
-  }
-]
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Robo League</title>
+    
+    <!-- iOS & PWA Settings -->
+    <link rel="apple-touch-icon" href="https://placehold.co/180x180/3b82f6/ffffff?text=ROBO">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#3b82f6">
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body { background-color: #f0f9ff; color: #1e293b; font-family: 'Nunito', sans-serif; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        .code-block { display: inline-block; padding: 4px 8px; border-radius: 6px; font-family: 'Courier New', monospace; font-weight: 800; font-size: 0.9em; color: white; box-shadow: 0 3px 0 rgba(0,0,0,0.15); margin: 2px; white-space: nowrap; vertical-align: middle; border: 1px solid rgba(0,0,0,0.1); }
+        .cb-event { background: #fbbf24; color: #78350f; border-color: #d97706; }
+        .cb-control { background: #f59e0b; border-color: #b45309; }
+        .cb-motion { background: #3b82f6; border-color: #1d4ed8; }
+        .cb-looks { background: #8b5cf6; border-color: #6d28d9; }
+        .cb-sound { background: #ec4899; border-color: #be185d; }
+        .cb-input { background: #06b6d4; border-color: #0e7490; }
+        .btn-bounce:active { transform: scale(0.95); }
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .anim-pop { animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .custom-checkbox:checked + div { background-color: #22c55e; border-color: #16a34a; color: white; }
+        .card-hover:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        .aspect-card { aspect-ratio: 2.5 / 3.5; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const ADMIN_PASS = "papa";
+
+        // --- TRADING CARDS DATABASE ---
+        const TRADING_CARDS = {
+            "c1": { id: "c1", name: "mBot Neo Alpha", image: "images/card_c1.png" },
+            "c2": { id: "c2", name: "Cyber Core", image: "images/card_c2.png" },
+            "c3": { id: "c3", name: "Pixel Mask", image: "images/card_c3.png" },
+            "c4": { id: "c4", name: "Sonic Blast", image: "images/card_c4.png" },
+            "c5": { id: "c5", name: "Controller Link", image: "images/card_c5.png" },
+            "c6": { id: "c6", name: "Turbo Drive", image: "images/card_c6.png" },
+            "c7": { id: "c7", name: "Drift Wheel", image: "images/card_c7.png" },
+            "c8": { id: "c8", name: "Chassis Armor", image: "images/card_c8.png" },
+            "c9": { id: "c9", name: "Echo Bat", image: "images/card_c9.png" },
+            "c10": { id: "c10", name: "Phantom Wall", image: "images/card_c10.png" },
+            "c11": { id: "c11", name: "Spectrum Eye", image: "images/card_c11.png" },
+            "c12": { id: "c12", name: "Pathfinder", image: "images/card_c12.png" },
+            "c13": { id: "c13", name: "Chameleon", image: "images/card_c13.png" },
+            "c14": { id: "c14", name: "Titan Claw", image: "images/card_c14.png" },
+            "c15": { id: "c15", name: "Servo Muscle", image: "images/card_c15.png" },
+            "c16": { id: "c16", name: "Heavy Lifter", image: "images/card_c16.png" },
+            "c17": { id: "c17", name: "Gyro Compass", image: "images/card_c17.png" },
+            "c18": { id: "c18", name: "Seismic Sense", image: "images/card_c18.png" },
+            "c19": { id: "c19", name: "Vocal Receptor", image: "images/card_c19.png" },
+            "c20": { id: "c20", name: "Solar Flare", image: "images/card_c20.png" },
+            "c21": { id: "c21", name: "Memory Bank", image: "images/card_c21.png" },
+            "c22": { id: "c22", name: "Time Loop", image: "images/card_c22.png" },
+            "c23": { id: "c23", name: "Signal Beacon", image: "images/card_c23.png" },
+            "c24": { id: "c24", name: "Rescue Unit", image: "images/card_c24.png" },
+            "c25": { id: "c25", name: "Galaxy Explorer", image: "images/card_c25.png" }
+        };
+
+        const REWARD_MAP = {
+            1: "c1", 4: "c2", 7: "c3", 9: "c4", 10: "c5",
+            13: "c6", 16: "c7", 20: "c8",
+            24: "c9", 30: "c10",
+            34: "c11", 37: "c12", 40: "c13",
+            44: "c14", 47: "c15", 50: "c16",
+            55: "c17", 60: "c18",
+            65: "c19", 70: "c20",
+            75: "c21", 80: "c22", 85: "c23",
+            90: "c24", 100: "c25"
+        };
+
+        // --- COMPONENTS ---
+
+        const HighlightCode = ({ text }) => {
+            const parts = text.split(/('.*?')/g);
+            return (
+                <span>
+                    {parts.map((part, i) => {
+                        if (part.startsWith("'") && part.endsWith("'")) {
+                            const content = part.slice(1, -1);
+                            let color = "cb-control"; 
+                            if (content.match(/grüne Flagge|Taste|Wenn/i)) color = "cb-event";
+                            else if (content.match(/Bild|Zeige|LED/i)) color = "cb-looks";
+                            else if (content.match(/Audio|Sound|Spiele/i)) color = "cb-sound";
+                            else if (content.match(/bewege|drehe|Servo/i)) color = "cb-motion";
+                            else if (content.match(/Joystick|Abstand/i)) color = "cb-input";
+                            return <span key={i} className={`code-block ${color}`}>{content}</span>;
+                        }
+                        return part;
+                    })}
+                </span>
+            );
+        };
+
+        const TradingCard = ({ cardId, isLocked, onClick, size = "normal" }) => {
+            const card = TRADING_CARDS[cardId];
+            if (!card && !isLocked) return null;
+            const sizeClasses = size === "large" ? "w-72 sm:w-80" : "w-36 sm:w-40";
+
+            if (isLocked) {
+                return (
+                    <div className={`${sizeClasses} aspect-card bg-slate-200 rounded-xl border-4 border-slate-300 flex flex-col items-center justify-center relative overflow-hidden shadow-inner`}>
+                        <i className="fas fa-lock text-4xl text-slate-400 mb-2"></i>
+                        <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">Gesperrt</span>
+                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+                        <div className="absolute bottom-2 text-[10px] text-slate-400">Card #{cardId.substring(1)}</div>
+                    </div>
+                );
+            }
+
+            return (
+                <div onClick={onClick} className={`${sizeClasses} aspect-card rounded-xl shadow-xl cursor-pointer transition-all duration-300 card-hover relative group overflow-hidden bg-slate-800`}>
+                    <img 
+                        src={card.image} 
+                        alt={card.name}
+                        className="w-full h-full object-contain"
+                        onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/750x1050/e2e8f0/64748b?text=Bild+fehlt'; }}
+                    />
+                </div>
+            );
+        };
+
+        const CardDetailModal = ({ cardId, onClose }) => {
+            const card = TRADING_CARDS[cardId];
+            if(!card) return null;
+            return (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur p-4 anim-pop" onClick={onClose}>
+                    <div className="bg-white p-6 rounded-3xl max-w-sm w-full text-center relative" onClick={e => e.stopPropagation()}>
+                        <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 bg-slate-100 rounded-full font-bold text-slate-600 hover:bg-slate-200">X</button>
+                        <h2 className="text-2xl font-black text-slate-800 mb-1">{card.name}</h2>
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-4">Karte #{card.id.substring(1)}</p>
+                        <div className="flex justify-center mb-6"><TradingCard cardId={cardId} isLocked={false} size="large" /></div>
+                        <a href={card.image} download={`RoboCard_${card.id}.png`} className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95" onClick={e => e.stopPropagation()}><i className="fas fa-download"></i> Bild speichern</a>
+                    </div>
+                </div>
+            );
+        };
+
+        const DeckModal = ({ unlockedCards, onClose }) => {
+            const [selectedCard, setSelectedCard] = useState(null);
+            return (
+                <div className="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur flex items-center justify-center p-4">
+                    <div className="bg-slate-50 w-full max-w-6xl h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden anim-pop border-4 border-slate-800">
+                        <div className="p-6 bg-slate-800 text-white flex justify-between items-center shrink-0 shadow-lg z-10">
+                            <div>
+                                <h2 className="text-3xl font-black italic uppercase tracking-wider text-yellow-400 flex items-center gap-3"><i className="fas fa-layer-group"></i> Mecha Deck</h2>
+                                <p className="text-slate-400 text-sm font-bold ml-1 mt-1">{unlockedCards.length} / 25 Karten gesammelt</p>
+                            </div>
+                            <button onClick={onClose} className="w-12 h-12 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-white transition-colors"><i className="fas fa-times text-xl"></i></button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-100 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-8 justify-items-center">
+                                {Object.keys(TRADING_CARDS).map(id => (
+                                    <TradingCard key={id} cardId={id} isLocked={!unlockedCards.includes(id)} size="normal" onClick={() => unlockedCards.includes(id) && setSelectedCard(id)} />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                    {selectedCard && <CardDetailModal cardId={selectedCard} onClose={() => setSelectedCard(null)} />}
+                </div>
+            );
+        };
+
+        const LoginScreen = ({ users, onSelectUser, onAddUser, onAdminLogin, hasCurriculum }) => {
+            const [newUserName, setNewUserName] = useState("");
+            const [showAddUser, setShowAddUser] = useState(false);
+            const [adminInput, setAdminInput] = useState("");
+            const [showAdminLogin, setShowAdminLogin] = useState(false);
+            const handleAddUser = () => { if(newUserName.trim()) { onAddUser(newUserName.trim()); setNewUserName(""); setShowAddUser(false); }};
+            const handleAdminCheck = () => { if(adminInput.toLowerCase() === ADMIN_PASS) onAdminLogin(); else alert("Zugriff verweigert!"); };
+
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-400 to-indigo-600 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none"><i className="fas fa-microchip absolute top-10 left-10 text-9xl text-white animate-pulse"></i><i className="fas fa-bolt absolute bottom-20 right-10 text-8xl text-yellow-300"></i></div>
+                    <div className="bg-white/90 backdrop-blur-xl p-8 rounded-3xl shadow-2xl w-full max-w-md text-center relative z-10 anim-pop">
+                        <div className="w-24 h-24 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg border-4 border-white -mt-16"><i className="fas fa-robot text-5xl text-white"></i></div>
+                        <h1 className="text-3xl font-black text-slate-800 mb-1">ROBO LEAGUE</h1>
+                        <p className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-8">Wähle deinen Tamer</p>
+                        {!hasCurriculum && <div className="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 rounded mb-6 text-sm text-left"><p className="font-bold">⚠ System Offline</p><p>Bitte Papa bitten, das Training zu laden.</p></div>}
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                            {users.map(user => (<button key={user} onClick={() => onSelectUser(user)} className="bg-white border-2 border-slate-100 hover:border-blue-400 hover:shadow-lg hover:-translate-y-1 transition-all p-4 rounded-2xl flex flex-col items-center gap-2 group"><div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl font-black group-hover:bg-blue-600 group-hover:text-white transition-colors">{user.charAt(0).toUpperCase()}</div><span className="font-bold text-slate-700">{user}</span></button>))}
+                            {!showAddUser ? (<button onClick={() => setShowAddUser(true)} className="border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 text-slate-400 hover:text-blue-500 transition-all p-4 rounded-2xl flex flex-col items-center gap-2"><div className="w-12 h-12 flex items-center justify-center"><i className="fas fa-plus text-2xl"></i></div><span className="font-bold text-sm">Neuer Spieler</span></button>) : (<div className="col-span-2 bg-slate-50 p-3 rounded-2xl border border-blue-200"><input type="text" value={newUserName} onChange={e => setNewUserName(e.target.value)} placeholder="Dein Name" className="w-full bg-white border border-slate-300 rounded-lg p-2 text-center font-bold text-slate-700 mb-2 focus:ring-2 focus:ring-blue-400 outline-none" autoFocus /><div className="flex gap-2"><button onClick={handleAddUser} className="flex-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-1 font-bold shadow">Start</button><button onClick={() => setShowAddUser(false)} className="px-3 text-slate-400 font-bold hover:text-slate-600">X</button></div></div>)}
+                        </div>
+                        <div className="flex justify-center">{!showAdminLogin ? (<button onClick={() => setShowAdminLogin(true)} className="text-slate-300 hover:text-slate-400 transition"><i className="fas fa-user-shield"></i></button>) : (<div className="flex gap-2 bg-slate-100 p-1 rounded-full border border-slate-200"><input type="password" value={adminInput} onChange={e => setAdminInput(e.target.value)} placeholder="Code" className="w-20 bg-transparent text-center text-xs outline-none" /><button onClick={handleAdminCheck} className="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center text-xs"><i className="fas fa-arrow-right"></i></button></div>)}</div>
+                    </div>
+                </div>
+            );
+        };
+
+        const LessonModal = ({ lesson, onClose, onComplete, isAdmin }) => {
+            const [tab, setTab] = useState('setup');
+            const [checks, setChecks] = useState({setup: {}, steps: {}});
+            const [photo, setPhoto] = useState(null);
+            const allSetup = lesson.setup.every((_, i) => checks.setup[i]);
+            const allSteps = lesson.steps.every((_, i) => checks.steps[i]);
+            const canFinish = (allSetup && allSteps && (!lesson.needsPhoto || photo)) || isAdmin;
+
+            return (
+                <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center p-0 sm:p-6 bg-slate-900/60 backdrop-blur-sm">
+                    <div className="bg-white w-full max-w-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col anim-pop overflow-hidden">
+                        <div className={`p-6 ${lesson.type === 'boss' ? 'bg-gradient-to-r from-purple-600 to-indigo-600' : 'bg-gradient-to-r from-blue-500 to-cyan-500'} text-white flex justify-between items-start shrink-0 relative overflow-hidden`}>
+                            <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/20 rounded-full blur-2xl"></div>
+                            <div className="relative z-10"><span className="inline-block bg-black/20 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-2">Level {lesson.id}</span><h2 className="text-2xl font-black leading-tight max-w-[80%]">{lesson.title}</h2></div>
+                            <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors btn-bounce relative z-10"><i className="fas fa-times text-lg"></i></button>
+                        </div>
+                        <div className="flex border-b border-slate-100 bg-white shrink-0 p-2 gap-2">
+                            <button onClick={() => setTab('setup')} className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase transition-all ${tab==='setup'?'bg-blue-50 text-blue-600 ring-2 ring-blue-100':'text-slate-400 hover:bg-slate-50'}`}>1. Check</button>
+                            <button onClick={() => setTab('steps')} disabled={!allSetup && !isAdmin} className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase transition-all ${tab==='steps'?'bg-blue-50 text-blue-600 ring-2 ring-blue-100':(!allSetup && !isAdmin ?'opacity-50 cursor-not-allowed text-slate-300':'text-slate-400 hover:bg-slate-50')}`}>2. Training</button>
+                            {lesson.sos && <button onClick={() => setTab('sos')} className={`flex-1 py-3 rounded-xl text-sm font-bold uppercase transition-all ${tab==='sos'?'bg-red-50 text-red-500 ring-2 ring-red-100':'text-slate-400 hover:bg-slate-50'}`}>Hilfe!</button>}
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
+                            {tab === 'setup' && (
+                                <div className="space-y-4">
+                                    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-start gap-4"><div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0"><i className="fas fa-clipboard-check"></i></div><div><h3 className="font-bold text-slate-800">System-Check</h3><p className="text-sm text-slate-500">Ist dein Partner bereit?</p></div></div>
+                                    {lesson.setup.map((t, i) => (<label key={i} className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${checks.setup[i] ? 'bg-green-50 border-green-400' : 'bg-white border-slate-200 hover:border-blue-300'}`}><input type="checkbox" className="custom-checkbox hidden" checked={!!checks.setup[i]} onChange={() => setChecks(p => ({...p, setup: {...p.setup, [i]: !p.setup[i]}}))} /><div className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center shrink-0 font-bold transition-colors ${checks.setup[i] ? 'bg-green-500 border-green-500 text-white' : 'bg-slate-100 border-slate-300 text-transparent'}`}><i className="fas fa-check"></i></div><span className={`font-bold ${checks.setup[i] ? 'text-green-700 line-through opacity-70' : 'text-slate-700'}`}>{t}</span></label>))}
+                                    {(allSetup || isAdmin) && (<button onClick={() => setTab('steps')} className="w-full py-4 bg-blue-500 text-white font-black text-lg rounded-2xl shadow-lg shadow-blue-500/30 btn-bounce mt-4 flex items-center justify-center gap-2">Start Training <i className="fas fa-arrow-right"></i></button>)}
+                                </div>
+                            )}
+                            {tab === 'steps' && (
+                                <div className="space-y-6">
+                                    <div className="bg-white p-5 rounded-2xl border-l-8 border-yellow-400 shadow-sm"><h3 className="text-slate-400 text-xs font-black uppercase tracking-wider mb-1">Missionsziel</h3><p className="text-slate-800 text-lg font-bold">{lesson.goal}</p></div>
+                                    {lesson.steps.map((s, i) => (<div key={i} className={`p-4 rounded-2xl border-2 transition-all ${checks.steps[i] ? 'bg-green-50 border-green-200 opacity-60' : 'bg-white border-slate-200 shadow-sm'}`}><div className="flex gap-4"><div className="flex flex-col items-center gap-2"><div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-black ${checks.steps[i] ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-500'}`}>{i+1}</div><input type="checkbox" className="w-8 h-8 accent-green-500" checked={!!checks.steps[i]} onChange={() => setChecks(p => ({...p, steps: {...p.steps, [i]: !p.steps[i]}}))} /></div><div className="flex-1 pt-1"><div className="text-slate-700 font-medium text-lg leading-relaxed"><HighlightCode text={s.text} /></div>{s.hint && <div className="mt-3 text-sm text-slate-600 bg-yellow-50 p-3 rounded-xl border border-yellow-100 flex gap-3"><i className="fas fa-lightbulb text-yellow-500 mt-1"></i><span>{s.hint}</span></div>}</div></div></div>))}
+                                    {lesson.needsPhoto && (<div className="mt-8"><h3 className="font-black text-slate-700 mb-3 flex items-center gap-2"><i className="fas fa-camera text-blue-500"></i> Beweis-Foto</h3>{photo ? (<div className="relative rounded-2xl overflow-hidden shadow-lg group"><img src={photo} className="w-full h-48 object-cover" /><button onClick={() => setPhoto(null)} className="absolute top-2 right-2 bg-red-500 text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center"><i className="fas fa-trash"></i></button><div className="absolute bottom-0 w-full bg-green-500 text-white text-center py-1 text-xs font-bold">GESPEICHERT</div></div>) : (<label className="block w-full py-8 border-4 border-dashed border-blue-200 rounded-3xl text-center cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-all group"><div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-500 group-hover:scale-110 transition-transform"><i className="fas fa-camera text-2xl"></i></div><div className="text-blue-500 font-bold">Foto aufnehmen</div><input type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files[0]){const r = new FileReader(); r.onload=()=>setPhoto(r.result); r.readAsDataURL(e.target.files[0]);}}} /></label>)}</div>)}
+                                </div>
+                            )}
+                            {tab === 'sos' && (
+                                <div className="space-y-4">
+                                    <div className="bg-red-50 p-4 rounded-2xl border border-red-100 flex items-center gap-3 text-red-600 font-bold"><i className="fas fa-kit-medical text-2xl"></i><span>Erste Hilfe Kasten</span></div>
+                                    {lesson.sos.map((item, i) => (<div key={i} className="bg-white border border-red-100 p-5 rounded-2xl shadow-sm"><div className="font-bold text-red-500 mb-2 flex items-center gap-2"><i className="fas fa-circle-question"></i> {item.problem}</div><div className="text-slate-600 pl-6 text-sm leading-relaxed">{item.solution}</div></div>))}
+                                </div>
+                            )}
+                        </div>
+                        <div className="p-4 border-t border-slate-100 bg-white shrink-0"><button onClick={onComplete} disabled={!canFinish} className={`w-full py-4 rounded-2xl font-black text-xl shadow-lg btn-bounce flex items-center justify-center gap-3 transition-all ${canFinish ? 'bg-gradient-to-r from-green-400 to-green-600 text-white shadow-green-500/30' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}>{canFinish ? <span><i className="fas fa-check-circle"></i> QUEST ABGESCHLOSSEN!</span> : <span><i className="fas fa-lock"></i> ERST ALLES ABHAKEN</span>}</button></div>
+                    </div>
+                </div>
+            );
+        };
+
+        const AdminPanel = ({ db, onImportCurriculum, onImportBackup, onResetData, closeAdmin }) => {
+            const fileInputRef = useRef();
+            const backupInputRef = useRef();
+            const handleFileLoad = (e, callback) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (event) => { try { const json = JSON.parse(event.target.result); callback(json); } catch (err) { alert("Fehler: " + err.message); }}; reader.readAsText(file); };
+            const downloadBackup = () => { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db)); const downloadAnchorNode = document.createElement('a'); downloadAnchorNode.setAttribute("href", dataStr); downloadAnchorNode.setAttribute("download", "robo_backup.json"); document.body.appendChild(downloadAnchorNode); downloadAnchorNode.click(); downloadAnchorNode.remove(); };
+
+            return (
+                <div className="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur overflow-y-auto p-4 custom-scrollbar">
+                    <div className="max-w-2xl mx-auto mt-10 mb-20 bg-white rounded-3xl p-8 shadow-2xl">
+                        <div className="flex justify-between items-center mb-8 border-b border-slate-100 pb-4"><h2 className="text-2xl font-black text-slate-800"><i className="fas fa-user-shield text-blue-500 mr-2"></i>PAPA ZENTRALE</h2><button onClick={closeAdmin} className="bg-slate-100 px-4 py-2 rounded-xl font-bold text-slate-600 hover:bg-slate-200">Schließen</button></div>
+                        <div className="grid gap-6">
+                            <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100"><h3 className="font-bold text-blue-800 mb-2">1. Lehrplan laden</h3><p className="text-sm text-blue-600 mb-4">Lade die <code>seasonX.json</code> Dateien hier hoch.</p><input type="file" accept=".json" ref={fileInputRef} className="hidden" onChange={(e) => handleFileLoad(e, onImportCurriculum)} /><button onClick={() => fileInputRef.current.click()} className="bg-blue-500 text-white font-bold py-3 px-6 rounded-xl w-full hover:bg-blue-600 shadow-lg shadow-blue-500/20"><i className="fas fa-cloud-upload-alt mr-2"></i> Importieren</button><div className="mt-2 text-xs text-blue-400 text-center">{db.curriculum ? db.curriculum.length + " Seasons geladen" : "Leer"}</div></div>
+                            <div className="bg-green-50 p-6 rounded-2xl border border-green-100"><h3 className="font-bold text-green-800 mb-2">2. Backup</h3><div className="flex gap-4"><button onClick={downloadBackup} className="flex-1 bg-green-500 text-white font-bold py-3 rounded-xl hover:bg-green-600 shadow-lg shadow-green-500/20"><i className="fas fa-download mr-2"></i> Speichern</button><input type="file" accept=".json" ref={backupInputRef} className="hidden" onChange={(e) => handleFileLoad(e, onImportBackup)} /><button onClick={() => backupInputRef.current.click()} className="flex-1 bg-white border-2 border-green-500 text-green-600 font-bold py-3 rounded-xl hover:bg-green-50"><i className="fas fa-upload mr-2"></i> Laden</button></div></div>
+                            <div className="border-t pt-6"><button onClick={() => { if(confirm("ALLES löschen?")) onResetData(); }} className="text-red-400 text-sm font-bold hover:text-red-600"><i className="fas fa-trash mr-1"></i> App komplett zurücksetzen</button></div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [db, setDb] = useState(() => { const saved = localStorage.getItem('robo_db_v2'); return saved ? JSON.parse(saved) : { users: [], curriculum: [], progress: {} }; });
+            const [currentUser, setCurrentUser] = useState(null);
+            const [activeLesson, setActiveLesson] = useState(null);
+            const [showAdmin, setShowAdmin] = useState(false);
+            const [showDeck, setShowDeck] = useState(false);
+            const [newCard, setNewCard] = useState(null);
+
+            useEffect(() => localStorage.setItem('robo_db_v2', JSON.stringify(db)), [db]);
+
+            const addUser = (name) => { if(!db.users.includes(name)) { setDb(prev => ({ ...prev, users: [...prev.users, name], progress: { ...prev.progress, [name]: { lessons: {}, cards: [] } } })); }};
+            const finishLesson = (lessonId) => {
+                if(currentUser === 'Admin') return;
+                const jsonReward = activeLesson.reward;
+                const mapReward = REWARD_MAP[lessonId];
+                const rewardCardId = jsonReward || mapReward;
+                let cardUnlocked = false;
+                let currentCards = db.progress[currentUser].cards || [];
+                if(rewardCardId && !currentCards.includes(rewardCardId)) { currentCards = [...currentCards, rewardCardId]; setNewCard(rewardCardId); cardUnlocked = true; }
+                setDb(prev => ({ ...prev, progress: { ...prev.progress, [currentUser]: { lessons: { ...(prev.progress[currentUser].lessons || {}), [lessonId]: true }, cards: currentCards } } }));
+                setActiveLesson(null);
+            };
+            const importCurriculum = (json) => { 
+                if(Array.isArray(json)) {
+                    setDb(prev => {
+                        const currentCurriculum = prev.curriculum || [];
+                        let newCurriculum = [...currentCurriculum];
+                        json.forEach(newSeason => {
+                            const index = newCurriculum.findIndex(s => s.id === newSeason.id);
+                            if (index !== -1) { newCurriculum[index] = newSeason; } 
+                            else { newCurriculum.push(newSeason); }
+                        });
+                        newCurriculum.sort((a, b) => {
+                            const numA = parseInt(a.id.replace('s', ''));
+                            const numB = parseInt(b.id.replace('s', ''));
+                            return numA - numB;
+                        });
+                        return { ...prev, curriculum: newCurriculum };
+                    });
+                    alert(`Erfolg! ${json.length} Season(s) importiert/aktualisiert.`);
+                    setShowAdmin(false);
+                } else {
+                    alert("Falsches Format! Die Datei muss eine Liste (Array) sein.");
+                }
+            };
+            const importBackup = (json) => { if(json.users) { setDb(json); alert("Wiederhergestellt!"); setShowAdmin(false); }};
+            const resetData = () => { setDb({ users: [], curriculum: [], progress: {} }); setShowAdmin(false); setCurrentUser(null); };
+
+            if (!currentUser) return <LoginScreen users={db.users} onSelectUser={setCurrentUser} onAddUser={addUser} onAdminLogin={() => { setCurrentUser('Admin'); setShowAdmin(true); }} hasCurriculum={db.curriculum && db.curriculum.length > 0} />;
+
+            const userProgress = (currentUser === 'Admin') ? { lessons: {}, cards: [] } : (db.progress[currentUser] || { lessons: {}, cards: [] });
+            const completedLessons = userProgress.lessons || {};
+            const unlockedCards = userProgress.cards || [];
+            const xp = Object.keys(completedLessons).length * 100;
+
+            return (
+                <div className="min-h-screen pb-12 bg-slate-50">
+                    <div className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-200 px-4 py-3 shadow-sm flex justify-between items-center">
+                        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setCurrentUser(null)}><div className="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-105 transition-transform"><i className="fas fa-chevron-left"></i></div><div><div className="text-xs text-blue-500 font-black uppercase tracking-wider">{currentUser === 'Admin' ? 'PAPA MODE' : `TAMER ${currentUser.toUpperCase()}`}</div><div className="text-slate-800 font-black leading-none text-lg">Robo League</div></div></div>
+                        <div className="flex items-center gap-3">
+                            {currentUser !== 'Admin' && (<><button onClick={() => setShowDeck(true)} className="bg-slate-800 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg hover:scale-105 transition flex items-center gap-2"><i className="fas fa-layer-group text-yellow-400"></i> Deck</button><div className="bg-yellow-100 px-3 py-1 rounded-full border border-yellow-200 text-sm font-black text-yellow-600 flex items-center gap-2"><i className="fas fa-bolt"></i> {xp} XP</div></>)}
+                            {currentUser === 'Admin' && <button onClick={() => setShowAdmin(true)} className="bg-slate-800 text-white px-3 py-1 rounded-lg text-sm font-bold">Admin</button>}
+                        </div>
+                    </div>
+                    <div className="max-w-3xl mx-auto p-4 space-y-8 mt-4">
+                        {(!db.curriculum || db.curriculum.length === 0) && (<div className="text-center mt-20 text-slate-400"><div className="w-32 h-32 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4"><i className="fas fa-ghost text-5xl opacity-50"></i></div><h3 className="font-bold text-xl text-slate-600">Keine Quests verfügbar</h3><p className="text-sm">Papa muss das Training erst laden.</p></div>)}
+                        {db.curriculum.map((season) => (
+                            <div key={season.id} className="relative">
+                                <div className="flex items-center gap-4 mb-6 pl-2"><div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl bg-white shadow-lg border-2 border-${season.color}-100 text-${season.color}-500 transform rotate-3`}><i className={`fas ${season.icon}`}></i></div><div><h2 className="text-3xl font-black text-slate-800 tracking-tight uppercase italic">{season.title}</h2><p className="text-slate-500 font-bold text-sm">{season.description}</p></div></div>
+                                <div className="grid gap-4">
+                                    {season.lessons.map((lesson, lIdx) => {
+                                        const isDone = completedLessons[lesson.id];
+                                        let isLocked = false;
+                                        if (lIdx > 0 && !completedLessons[season.lessons[lIdx-1].id]) isLocked = true;
+                                        if (currentUser === 'Admin') isLocked = false;
+                                        return (
+                                            <button key={lesson.id} disabled={isLocked} onClick={() => setActiveLesson(lesson)} className={`w-full text-left relative group transition-all duration-300 transform ${isLocked ? 'opacity-60 scale-95 grayscale cursor-not-allowed' : 'hover:scale-[1.02] cursor-pointer'}`}>
+                                                <div className={`bg-white p-5 rounded-3xl border-b-4 border-r-4 transition-all flex justify-between items-center ${isDone ? 'border-green-500 shadow-none bg-green-50' : isLocked ? 'border-slate-200' : 'border-blue-500 shadow-xl shadow-blue-200'}`}>
+                                                    <div className="flex items-center gap-4"><div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg ${isDone ? 'bg-green-500 text-white' : isLocked ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-600'}`}>{isDone ? <i className="fas fa-check"></i> : lesson.id}</div><div><div className="flex gap-2 mb-1">{lesson.type === 'boss' && <span className="bg-purple-100 text-purple-600 text-[10px] px-2 py-0.5 rounded-full font-black uppercase">Arena Kampf</span>}{lesson.type === 'challenge' && <span className="bg-orange-100 text-orange-600 text-[10px] px-2 py-0.5 rounded-full font-black uppercase">Challenge</span>}</div><h3 className={`font-black text-lg ${isDone ? 'text-green-700' : 'text-slate-700'}`}>{lesson.title}</h3></div></div><div className="text-2xl opacity-20"><i className={`fas ${isLocked ? 'fa-lock' : 'fa-chevron-right'}`}></i></div>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    {activeLesson && <LessonModal lesson={activeLesson} onClose={() => setActiveLesson(null)} onComplete={() => finishLesson(activeLesson.id)} isAdmin={currentUser === 'Admin'} />}
+                    {showAdmin && <AdminPanel db={db} onImportCurriculum={importCurriculum} onImportBackup={importBackup} onResetData={resetData} closeAdmin={() => setShowAdmin(false)} />}
+                    {showDeck && <DeckModal unlockedCards={unlockedCards} onClose={() => setShowDeck(false)} />}
+                    {newCard && (
+                        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur animate-fade-in p-4">
+                             <div className="text-center anim-pop" onClick={e => e.stopPropagation()}>
+                                 <h2 className="text-4xl font-black text-yellow-400 mb-6 drop-shadow-lg uppercase italic animate-bounce">Neue Karte freigeschaltet!</h2>
+                                 <div className="transform scale-150 mb-8" onClick={() => { setNewCard(null); setShowDeck(true); }}><TradingCard cardId={newCard} isLocked={false} size="large" /></div>
+                                 <div className="flex gap-4 justify-center"><button onClick={() => setNewCard(null)} className="bg-white/20 hover:bg-white/30 text-white border border-white font-bold py-2 px-6 rounded-full">Schließen</button><a href={TRADING_CARDS[newCard].image} download={`RoboCard_${newCard}.png`} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full flex items-center gap-2"><i className="fas fa-download"></i> Bild speichern</a></div>
+                             </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
