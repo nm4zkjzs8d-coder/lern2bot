@@ -11,8 +11,9 @@
     <meta name="theme-color" content="#3b82f6">
 
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -302,7 +303,19 @@
                         <h2 className="text-6xl font-black text-yellow-400 mb-4 drop-shadow-lg uppercase italic transform -rotate-3">LEVEL UP!</h2>
                         <div className="bg-white/10 backdrop-blur-md border-4 border-white/30 rounded-3xl p-8 mb-8 relative shadow-[0_0_50px_rgba(255,255,255,0.2)]">
                             <div className="relative inline-block">
-                                <img src={rank.badge} className="w-32 h-32 mx-auto mb-4 anim-bounce" onError={(e) => e.target.style.display='none'} alt={rank.title} />
+                                <img 
+                                    src={rank.badge} 
+                                    className="w-32 h-32 mx-auto mb-4 anim-bounce" 
+                                    onError={(e) => {
+                                        e.target.style.display='none';
+                                        const fallback = document.createElement('div');
+                                        fallback.className = 'w-32 h-32 mx-auto mb-4 rounded-full flex items-center justify-center text-6xl text-white anim-bounce';
+                                        fallback.style.backgroundColor = rank.color;
+                                        fallback.innerHTML = `<i class="fas ${rank.icon}"></i>`;
+                                        e.target.parentElement.appendChild(fallback);
+                                    }} 
+                                    alt={rank.title} 
+                                />
                                 <div className="absolute inset-0 rounded-full animate-ping opacity-25" style={{backgroundColor: rank.color}}></div>
                             </div>
                             <h3 className="text-4xl font-black text-white mb-2">{rank.title}</h3>
@@ -314,27 +327,53 @@
             );
         };
 
+
+
         const AchievementNotification = ({ achievement, onClose }) => {
             useEffect(() => {
-                const timer = setTimeout(onClose, 4000);
+                if(!achievement) {
+                    console.error('No achievement data');
+                    if(onClose) onClose();
+                    return;
+                }
+                
+                const timer = setTimeout(() => {
+                    if(onClose) onClose();
+                }, 4000);
+                
                 return () => clearTimeout(timer);
-            }, []);
+            }, [achievement, onClose]);
+
+            if(!achievement) return null;
 
             return (
                 <div className="fixed top-20 right-4 z-[90] achievement-notify">
                     <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-2xl shadow-2xl flex items-center gap-4 border-2 border-white/20 backdrop-blur">
                         <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
-                            <img src={achievement.badge} className="w-12 h-12" onError={(e) => {e.target.style.display='none'; e.target.parentElement.innerHTML = `<i class="fas ${achievement.icon} text-3xl"></i>`;}} alt={achievement.name} />
+                            <img 
+                                src={achievement.badge} 
+                                className="w-12 h-12" 
+                                onError={(e) => {
+                                    e.target.style.display='none';
+                                    const icon = document.createElement('i');
+                                    icon.className = `fas ${achievement.icon || 'fa-award'} text-4xl text-yellow-300`;
+                                    e.target.parentElement.appendChild(icon);
+                                }} 
+                                alt={achievement.name || 'Achievement'} 
+                            />
                         </div>
                         <div>
                             <div className="text-xs font-black uppercase tracking-wider text-yellow-300">Achievement Freigeschaltet!</div>
-                            <h3 className="text-lg font-black">{achievement.name}</h3>
-                            <p className="text-sm text-white/80">{achievement.desc}</p>
+                            <h3 className="text-lg font-black">{achievement.name || 'Unbekannt'}</h3>
+                            <p className="text-sm text-white/80">{achievement.desc || 'Geschafft!'}</p>
                         </div>
                     </div>
                 </div>
             );
         };
+
+
+
 
         const ProgressRing = ({ progress, size = 60 }) => {
             const strokeWidth = 4;
@@ -359,6 +398,20 @@
                 happy: 'images/robo_happy.png',
                 excited: 'images/robo_excited.png',
                 sad: 'images/robo_sleepy.png'
+            };
+            
+            const mascotIcons = {
+                idle: 'fa-robot',
+                happy: 'fa-face-smile',
+                excited: 'fa-face-laugh-beam',
+                sad: 'fa-face-frown'
+            };
+            
+            const mascotColors = {
+                idle: 'from-blue-500 to-cyan-400',
+                happy: 'from-green-500 to-emerald-400',
+                excited: 'from-yellow-500 to-orange-400',
+                sad: 'from-slate-500 to-slate-400'
             };
 
             useEffect(() => {
@@ -386,7 +439,10 @@
                             className="w-full h-full object-contain drop-shadow-2xl" 
                             onError={(e) => {
                                 e.target.style.display='none';
-                                e.target.parentElement.innerHTML = '<div class="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center text-white text-4xl"><i class="fas fa-robot"></i></div>';
+                                const fallback = document.createElement('div');
+                                fallback.className = `w-24 h-24 bg-gradient-to-br ${mascotColors[mood]} rounded-2xl flex items-center justify-center text-white text-5xl shadow-2xl border-4 border-white`;
+                                fallback.innerHTML = `<i class="fas ${mascotIcons[mood]}"></i>`;
+                                e.target.parentElement.appendChild(fallback);
                             }} 
                             alt="Robo Buddy" 
                         />
@@ -394,6 +450,8 @@
                 </div>
             );
         };
+
+
 
         const TradingCard = ({ cardId, isLocked, onClick, size = "normal", showRarity = false }) => {
             const card = TRADING_CARDS[cardId];
@@ -436,44 +494,95 @@
         };
 
         const CardUnlockModal = ({ cardId, onClose }) => {
-            const card = TRADING_CARDS[cardId];
-            const [showFront, setShowFront] = useState(false);
+        const card = TRADING_CARDS[cardId];
+        const [showFront, setShowFront] = useState(false);
 
-            useEffect(() => {
+        useEffect(() => {
+            // Safety check
+            if(!card) {
+                console.error('Card not found:', cardId);
+                onClose();
+                return;
+            }
+            
+            // Trigger confetti safely
+            try {
                 triggerConfetti();
-                setTimeout(() => setShowFront(true), 500);
-            }, []);
+            } catch(e) {
+                console.error('Confetti error:', e);
+            }
+            
+            // Set timeout with cleanup
+            const timer = setTimeout(() => {
+                setShowFront(true);
+            }, 500);
+            
+            // Cleanup function
+            return () => clearTimeout(timer);
+        }, [cardId, card]);
 
-            if(!card) return null;
+        // Early return if no card
+        if(!card) {
+            console.warn('CardUnlockModal: No card data for', cardId);
+            return null;
+        }
 
-            return (
-                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/90 backdrop-blur anim-pop" onClick={onClose}>
-                    <div className="text-center">
-                        <h2 className="text-5xl font-black text-yellow-400 mb-2 anim-bounce">NEUE KARTE!</h2>
-                        <div className="text-xl font-bold text-white mb-6 uppercase tracking-wider">{card.rarity} Karte erhalten!</div>
-                        <div className="relative inline-block">
-                            {!showFront ? (
-                                <div className="w-72 sm:w-80 aspect-card bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-2xl">
-                                    <img src="images/card_back.png" className="w-full h-full object-cover rounded-xl" onError={(e) => {e.target.parentElement.innerHTML = '<i class="fas fa-question text-9xl text-white"></i>';}} alt="Card Back" />
-                                </div>
-                            ) : (
-                                <div className="anim-flip">
-                                    <TradingCard cardId={cardId} isLocked={false} size="large" showRarity={true} />
-                                </div>
-                            )}
-                        </div>
-                        {showFront && <h3 className="text-2xl font-black text-white mt-4">{card.name}</h3>}
-                        <p className="text-white/70 text-sm mt-6 animate-pulse">Tippe irgendwo zum Fortfahren</p>
+        return (
+            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/90 backdrop-blur anim-pop" onClick={onClose}>
+                <div className="text-center" onClick={(e) => e.stopPropagation()}>
+                    <h2 className="text-5xl font-black text-yellow-400 mb-2 anim-bounce">NEUE KARTE!</h2>
+                    <div className="text-xl font-bold text-white mb-6 uppercase tracking-wider">{card.rarity} Karte erhalten!</div>
+                    <div className="relative inline-block">
+                        {!showFront ? (
+                            <div className="w-72 sm:w-80 aspect-card bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-2xl border-4 border-white/20">
+                                <img 
+                                    src="images/card_back.png" 
+                                    className="w-full h-full object-cover rounded-xl" 
+                                    onError={(e) => {
+                                        e.target.style.display='none';
+                                        const fallback = document.createElement('div');
+                                        fallback.className = 'text-white text-center';
+                                        fallback.innerHTML = '<i class="fas fa-question text-9xl mb-4 opacity-50"></i><p class="text-2xl font-black">???</p>';
+                                        e.target.parentElement.appendChild(fallback);
+                                    }} 
+                                    alt="Card Back" 
+                                />
+                            </div>
+                        ) : (
+
+                            <div className="anim-flip">
+                                <TradingCard cardId={cardId} isLocked={false} size="large" showRarity={true} />
+                            </div>
+                        )}
                     </div>
+                    {showFront && <h3 className="text-2xl font-black text-white mt-4">{card.name}</h3>}
+                    <p className="text-white/70 text-sm mt-6 animate-pulse">Tippe irgendwo zum Fortfahren</p>
                 </div>
-            );
-        };
+            </div>
+        );
+    };
+
 
         const QuizModal = ({ quiz, onClose, onFinish }) => {
             const [currentQ, setCurrentQ] = useState(0);
             const [score, setScore] = useState(0);
             const [showResult, setShowResult] = useState(false);
             const [selectedOption, setSelectedOption] = useState(null);
+
+            // ✅ WICHTIG: useEffect MUSS IMMER an der gleichen Stelle sein!
+            useEffect(() => {
+                // Nur Confetti wenn showResult UND passed
+                if(showResult) {
+                    const passed = score >= Math.ceil(quiz.questions.length * 0.7);
+                    if(passed) {
+                        try {
+                            triggerConfetti();
+                        } catch(e) {
+                            console.error('Confetti error:', e);
+                        }
+                    }
+                }
+            }, [showResult, score, quiz.questions.length]);
 
             const handleAnswer = (index) => {
                 if (selectedOption !== null) return;
@@ -491,13 +600,10 @@
                 }, 1500);
             };
 
+            // Result Screen
             if (showResult) {
                 const passed = score >= Math.ceil(quiz.questions.length * 0.7);
                 const isPerfect = score === quiz.questions.length;
-                
-                useEffect(() => {
-                    if(passed) triggerConfetti();
-                }, []);
 
                 return (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur p-4 anim-pop">
@@ -507,8 +613,15 @@
                             </div>
                             <h2 className="text-3xl font-black text-slate-800 mb-2">{passed ? (isPerfect ? "PERFEKT! 🎉" : "Prüfung bestanden!") : "Leider durchgefallen"}</h2>
                             <p className="text-slate-500 mb-6 font-bold">{score} von {quiz.questions.length} Fragen richtig.</p>
-                            {isPerfect && <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-3 mb-4"><p className="text-yellow-700 font-bold text-sm">🌟 Perfekte Punktzahl! Achievement freigeschaltet!</p></div>}
-                            <button onClick={() => onFinish(passed, score, isPerfect)} className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white font-black rounded-xl shadow-lg btn-bounce">
+                            {isPerfect && (
+                                <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-3 mb-4">
+                                    <p className="text-yellow-700 font-bold text-sm">🌟 Perfekte Punktzahl! Achievement freigeschaltet!</p>
+                                </div>
+                            )}
+                            <button 
+                                onClick={() => onFinish(passed, score, isPerfect)} 
+                                className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white font-black rounded-xl shadow-lg btn-bounce"
+                            >
                                 {passed ? "Urkunde abholen" : "Nochmal versuchen"}
                             </button>
                         </div>
@@ -516,6 +629,7 @@
                 );
             }
 
+            // Question Screen
             const q = quiz.questions[currentQ];
 
             return (
@@ -526,7 +640,9 @@
                                 <span className="text-xs font-black uppercase text-blue-400 tracking-wider">Quiz: {quiz.title}</span>
                                 <div className="text-sm font-bold text-slate-400">Frage {currentQ + 1} von {quiz.questions.length}</div>
                             </div>
-                            <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center"><i className="fas fa-times"></i></button>
+                            <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center">
+                                <i className="fas fa-times"></i>
+                            </button>
                         </div>
                         
                         <div className="flex-1 p-8 flex flex-col justify-center bg-slate-50">
@@ -560,6 +676,7 @@
                 </div>
             );
         };
+
 
         const CardDetailModal = ({ cardId, onClose }) => {
             const card = TRADING_CARDS[cardId]; 
@@ -652,22 +769,52 @@
                         </div>
                         <div className="p-6 max-h-[60vh] overflow-y-auto">
                             {leaderboard.map((entry, idx) => (
-                                <div key={entry.user} className={`flex items-center gap-4 p-4 rounded-2xl mb-3 transition-all ${idx < 3 ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-400' : 'bg-slate-50'}`}>
-                                    <div className="w-12 h-12 flex items-center justify-center shrink-0">
-                                        {idx === 0 && <img src="images/trophy_gold.png" className="w-10 h-10" onError={(e) => {e.target.style.display='none'; e.target.parentElement.innerHTML='<div class="text-3xl">🥇</div>';}} alt="Gold" />}
-                                        {idx === 1 && <img src="images/trophy_silver.png" className="w-10 h-10" onError={(e) => {e.target.style.display='none'; e.target.parentElement.innerHTML='<div class="text-3xl">🥈</div>';}} alt="Silver" />}
-                                        {idx === 2 && <img src="images/trophy_bronze.png" className="w-10 h-10" onError={(e) => {e.target.style.display='none'; e.target.parentElement.innerHTML='<div class="text-3xl">🥉</div>';}} alt="Bronze" />}
-                                        {idx > 2 && <div className="text-2xl font-black text-slate-400">#{idx + 1}</div>}
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="text-lg font-black text-slate-800">{entry.user}</h3>
-                                        <p className="text-sm text-slate-500">{entry.rank.title}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="text-2xl font-black text-blue-600">{entry.xp} XP</div>
-                                        <div className="text-xs text-slate-500">{entry.cards} Karten</div>
-                                    </div>
+                                <div className="w-12 h-12 flex items-center justify-center shrink-0">
+                                    {idx === 0 && (
+                                        <img 
+                                            src="images/trophy_gold.png" 
+                                            className="w-10 h-10" 
+                                            onError={(e) => {
+                                                e.target.style.display='none';
+                                                const emoji = document.createElement('div');
+                                                emoji.className = 'text-4xl';
+                                                emoji.textContent = '🥇';
+                                                e.target.parentElement.appendChild(emoji);
+                                            }} 
+                                            alt="Gold" 
+                                        />
+                                    )}
+                                    {idx === 1 && (
+                                        <img 
+                                            src="images/trophy_silver.png" 
+                                            className="w-10 h-10" 
+                                            onError={(e) => {
+                                                e.target.style.display='none';
+                                                const emoji = document.createElement('div');
+                                                emoji.className = 'text-4xl';
+                                                emoji.textContent = '🥈';
+                                                e.target.parentElement.appendChild(emoji);
+                                            }} 
+                                            alt="Silver" 
+                                        />
+                                    )}
+                                    {idx === 2 && (
+                                        <img 
+                                            src="images/trophy_bronze.png" 
+                                            className="w-10 h-10" 
+                                            onError={(e) => {
+                                                e.target.style.display='none';
+                                                const emoji = document.createElement('div');
+                                                emoji.className = 'text-4xl';
+                                                emoji.textContent = '🥉';
+                                                e.target.parentElement.appendChild(emoji);
+                                            }} 
+                                            alt="Bronze" 
+                                        />
+                                    )}
+                                    {idx > 2 && <div className="text-2xl font-black text-slate-400">#{idx + 1}</div>}
                                 </div>
+
                             ))}
                         </div>
                         <div className="p-4 border-t border-slate-100">
@@ -702,8 +849,19 @@
                                         <div key={ach.id} className={`p-4 rounded-2xl border-2 transition-all ${unlocked ? 'bg-white border-green-400' : 'bg-slate-100 border-slate-200 opacity-60'}`}>
                                             <div className="flex items-start gap-4">
                                                 <div className={`w-16 h-16 rounded-xl flex items-center justify-center shrink-0 ${unlocked ? 'bg-gradient-to-br from-yellow-400 to-orange-500' : 'bg-slate-300'}`}>
-                                                    <img src={ach.badge} className="w-12 h-12" onError={(e) => {e.target.style.display='none'; e.target.parentElement.innerHTML = `<i class="fas ${ach.icon} text-2xl ${unlocked ? 'text-white' : 'text-slate-500'}"></i>`;}} alt={ach.name} />
+                                                    <img 
+                                                        src={ach.badge} 
+                                                        className="w-12 h-12" 
+                                                        onError={(e) => {
+                                                            e.target.style.display='none';
+                                                            const icon = document.createElement('i');
+                                                            icon.className = `fas ${ach.icon || 'fa-award'} text-3xl ${unlocked ? 'text-white' : 'text-slate-500'}`;
+                                                            e.target.parentElement.appendChild(icon);
+                                                        }} 
+                                                        alt={ach.name} 
+                                                    />
                                                 </div>
+
                                                 <div className="flex-1">
                                                     <h3 className={`font-black text-lg ${unlocked ? 'text-slate-800' : 'text-slate-400'}`}>{ach.name}</h3>
                                                     <p className={`text-sm ${unlocked ? 'text-slate-600' : 'text-slate-400'}`}>{ach.desc}</p>
@@ -1028,12 +1186,15 @@
             
             const finishLesson = (lessonId) => {
                 if(currentUser === 'Admin') return;
+                console.log('🎯 Finishing lesson:', lessonId); // DEBUG
                 
                 setLastCompletionTime(Date.now());
                 
                 const jsonReward = activeLesson.reward;
                 const mapReward = REWARD_MAP[lessonId];
                 const rewardCardId = jsonReward || mapReward;
+
+                console.log('🎁 Reward card:', rewardCardId, 'exists:', !!TRADING_CARDS[rewardCardId]); // DEBUG
                 let currentCards = (db.progress[currentUser]?.cards) || [];
                 
                 if(rewardCardId && !currentCards.includes(rewardCardId)) { 
@@ -1104,54 +1265,90 @@
             };
 
             const finishQuiz = (quizId, passed, score, isPerfect) => {
+                console.log('🎯 Quiz finished:', quizId, 'passed:', passed, 'score:', score, 'perfect:', isPerfect);
+                
+                // WICHTIG: Zuerst Modal schließen BEVOR wir State updates machen
                 setActiveQuiz(null);
+                
                 if(currentUser === 'Admin') return;
                 
                 if(passed) {
-                    setLastCompletionTime(Date.now());
-                    const userProg = db.progress[currentUser] || { lessons: {}, quizzes: {}, cards: [], completedToday: 0 };
-                    const quizzes = userProg.quizzes || {};
-                    const newQuizzes = { ...quizzes, [quizId]: score };
-                    
-                    // Achievement Checks
-                    const currentAchievements = db.achievements[currentUser] || [];
-                    const newAchievements = [...currentAchievements];
-                    
-                    // Perfectionist
-                    if(isPerfect && !newAchievements.includes('perfectionist')) {
-                        newAchievements.push('perfectionist');
-                        setTimeout(() => setAchievementNotif(ACHIEVEMENTS.perfectionist), 1500);
-                    }
-                    
-                    // Quiz Master
-                    const totalQuizzesAvailable = Object.keys(db.quizzes).length;
-                    if(totalQuizzesAvailable > 0 && Object.keys(newQuizzes).length === totalQuizzesAvailable && !newAchievements.includes('quiz_master')) {
-                        newAchievements.push('quiz_master');
-                        setTimeout(() => setAchievementNotif(ACHIEVEMENTS.quiz_master), 2000);
-                    }
-                    
-                    setDb(prev => ({ 
-                        ...prev, 
-                        progress: { 
-                            ...prev.progress, 
-                            [currentUser]: { 
-                                ...userProg, 
-                                quizzes: newQuizzes
-                            } 
-                        },
-                        achievements: {
-                            ...prev.achievements,
-                            [currentUser]: newAchievements
+                    // Alle State Updates in EINEM setDb Call
+                    setDb(prev => {
+                        const userProg = prev.progress[currentUser] || { lessons: {}, quizzes: {}, cards: [], completedToday: 0 };
+                        const quizzes = userProg.quizzes || {};
+                        const newQuizzes = { ...quizzes, [quizId]: score };
+                        
+                        // Achievement Checks
+                        const currentAchievements = prev.achievements[currentUser] || [];
+                        const newAchievements = [...currentAchievements];
+                        
+                        // Perfectionist
+                        if(isPerfect && !newAchievements.includes('perfectionist')) {
+                            console.log('🌟 Unlocking perfectionist achievement');
+                            newAchievements.push('perfectionist');
                         }
-                    }));
+                        
+                        // Quiz Master
+                        const totalQuizzesAvailable = Object.keys(prev.quizzes).length;
+                        console.log('📝 Total quizzes:', totalQuizzesAvailable, 'completed:', Object.keys(newQuizzes).length);
+                        
+                        if(totalQuizzesAvailable > 0 && Object.keys(newQuizzes).length === totalQuizzesAvailable && !newAchievements.includes('quiz_master')) {
+                            console.log('👑 Unlocking quiz_master achievement');
+                            newAchievements.push('quiz_master');
+                        }
+                        
+                        console.log('💾 Saving achievements:', newAchievements);
+                        
+                        return {
+                            ...prev,
+                            progress: {
+                                ...prev.progress,
+                                [currentUser]: {
+                                    ...userProg,
+                                    quizzes: newQuizzes
+                                }
+                            },
+                            achievements: {
+                                ...prev.achievements,
+                                [currentUser]: newAchievements
+                            }
+                        };
+                    });
                     
+                    // Notifications NACH dem State Update
+                    setLastCompletionTime(Date.now());
+                    
+                    // Achievement Notifications mit Delay
+                    const currentAchievements = db.achievements[currentUser] || [];
+                    if(isPerfect && !currentAchievements.includes('perfectionist')) {
+                        setTimeout(() => {
+                            console.log('Showing perfectionist notification');
+                            setAchievementNotif(ACHIEVEMENTS.perfectionist);
+                        }, 1500);
+                    }
+                    
+                    const totalQuizzesAvailable = Object.keys(db.quizzes).length;
+                    const newQuizCount = Object.keys({...(db.progress[currentUser]?.quizzes || {}), [quizId]: score}).length;
+                    if(totalQuizzesAvailable > 0 && newQuizCount === totalQuizzesAvailable && !currentAchievements.includes('quiz_master')) {
+                        setTimeout(() => {
+                            console.log('Showing quiz_master notification');
+                            setAchievementNotif(ACHIEVEMENTS.quiz_master);
+                        }, 2500);
+                    }
+                    
+                    // Mascot Mood
                     setMascotMood('happy');
                     setTimeout(() => setMascotMood('idle'), 2000);
+                    
                 } else {
+                    // Failed Quiz
                     setMascotMood('sad');
                     setTimeout(() => setMascotMood('idle'), 2000);
                 }
             };
+
+
 
 
             const handleImport = (json) => {
