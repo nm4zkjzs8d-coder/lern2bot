@@ -1615,47 +1615,102 @@
                                     {/* Season Content - NUR WENN OFFEN */}
                                     {isOpen && (
                                         <div className="p-4 space-y-3">
-                                            {season.lessons && season.lessons.map(lesson => {
+                                            {season.lessons && season.lessons.map((lesson, lessonIndex) => {
                                                 const completed = completedLessons[lesson.id];
                                                 const isBoss = lesson.type === 'boss';
+                                                
+                                                // ✅ CHECK: Ist vorheriges Level abgeschlossen?
+                                                let isLessonLocked = false;
+                                                if(currentUser !== 'Admin' && lessonIndex > 0) {
+                                                    const prevLesson = season.lessons[lessonIndex - 1];
+                                                    isLessonLocked = !completedLessons[prevLesson.id];
+                                                }
+                                                
+                                                // Wenn Season gesperrt ist, sind alle Lessons gesperrt
+                                                const finalLocked = isLocked || isLessonLocked;
                                                 
                                                 return (
                                                     <button 
                                                         key={lesson.id}
-                                                        onClick={() => !isLocked && setActiveLesson(lesson)}
-                                                        disabled={isLocked}
+                                                        onClick={() => !finalLocked && setActiveLesson(lesson)}
+                                                        disabled={finalLocked}
                                                         className={`w-full p-4 rounded-xl font-bold text-left transition-all flex items-center justify-between ${
-                                                            isLocked 
+                                                            finalLocked 
                                                                 ? 'bg-slate-100 border-2 border-slate-200 text-slate-400 cursor-not-allowed'
                                                                 : completed 
                                                                     ? 'bg-green-50 border-2 border-green-200 text-green-700' 
                                                                     : 'bg-slate-50 border-2 border-slate-200 text-slate-700 hover:border-blue-400 hover:shadow-lg hover:scale-[1.02]'
-                                                        } ${isBoss && !isLocked ? 'ring-2 ring-purple-500' : ''}`}
+                                                        } ${isBoss && !finalLocked ? 'ring-2 ring-purple-500' : ''}`}
                                                     >
                                                         <div className="flex items-center gap-3">
                                                             <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                                                isLocked
+                                                                finalLocked
                                                                     ? 'bg-slate-200 text-slate-400'
                                                                     : isBoss 
                                                                         ? 'bg-purple-100 text-purple-600' 
                                                                         : 'bg-blue-100 text-blue-600'
                                                             }`}>
-                                                                <i className={`fas ${isLocked ? 'fa-lock' : isBoss ? 'fa-crown' : 'fa-graduation-cap'}`}></i>
+                                                                <i className={`fas ${finalLocked ? 'fa-lock' : isBoss ? 'fa-crown' : 'fa-graduation-cap'}`}></i>
                                                             </div>
                                                             <div>
                                                                 <div className="flex items-center gap-2">
-                                                                    <div className={`text-xs font-black uppercase ${isLocked ? 'text-slate-400' : 'text-slate-500'}`}>
+                                                                    <div className={`text-xs font-black uppercase ${finalLocked ? 'text-slate-400' : 'text-slate-500'}`}>
                                                                         Level {lesson.id}
                                                                     </div>
-                                                                    {isBoss && !isLocked && <span className="bg-purple-500 text-white text-xs px-2 py-0.5 rounded-full font-black uppercase">Boss</span>}
+                                                                    {isBoss && !finalLocked && <span className="bg-purple-500 text-white text-xs px-2 py-0.5 rounded-full font-black uppercase">Boss</span>}
+                                                                    {isLessonLocked && !isLocked && (
+                                                                        <span className="text-xs text-orange-500 font-bold">
+                                                                            <i className="fas fa-arrow-left mr-1"></i>Vorheriges Level zuerst
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                                 <div>{lesson.title}</div>
                                                             </div>
                                                         </div>
-                                                        {completed && !isLocked && <i className="fas fa-check-circle text-green-500 text-2xl"></i>}
+                                                        {completed && !finalLocked && <i className="fas fa-check-circle text-green-500 text-2xl"></i>}
                                                     </button>
                                                 );
                                             })}
+
+                                            {seasonQuiz && (
+                                                <button 
+                                                    onClick={() => !isLocked && !allLessonsComplete && setActiveQuiz(seasonQuiz)}
+                                                    disabled={isLocked || !allLessonsComplete}
+                                                    className={`w-full p-4 rounded-xl font-bold text-left transition-all flex items-center justify-between mt-4 border-2 ${
+                                                        isLocked || !allLessonsComplete
+                                                            ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                                                            : quizCompleted
+                                                                ? 'bg-yellow-50 border-yellow-300 text-yellow-700'
+                                                                : 'bg-orange-50 border-orange-200 text-orange-700 hover:border-orange-400 hover:shadow-lg hover:scale-[1.02]'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                                            isLocked || !allLessonsComplete ? 'bg-slate-200 text-slate-400' : 'bg-orange-100 text-orange-600'
+                                                        }`}>
+                                                            <i className={`fas ${isLocked || !allLessonsComplete ? 'fa-lock' : 'fa-clipboard-question'}`}></i>
+                                                        </div>
+                                                        <div>
+                                                            <div className={`text-xs font-black uppercase ${isLocked || !allLessonsComplete ? 'text-slate-400' : 'text-orange-500'}`}>
+                                                                Quiz
+                                                                {!isLocked && !allLessonsComplete && (
+                                                                    <span className="ml-2 text-orange-500 font-bold normal-case">
+                                                                        <i className="fas fa-arrow-up mr-1"></i>Alle Levels zuerst
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div>{seasonQuiz.title}</div>
+                                                        </div>
+                                                    </div>
+                                                    {quizCompleted && !isLocked && allLessonsComplete && (
+                                                        <div className="text-right">
+                                                            <i className="fas fa-trophy text-yellow-500 text-2xl"></i>
+                                                            <div className="text-xs">{completedQuizzes[season.id]} Punkte</div>
+                                                        </div>
+                                                    )}
+                                                </button>
+                                            )}
+
                                             
                                             {seasonQuiz && (
                                                 <button 
