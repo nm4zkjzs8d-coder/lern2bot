@@ -1098,6 +1098,7 @@
             const [showLeaderboard, setShowLeaderboard] = useState(false);
             const [showAchievements, setShowAchievements] = useState(false);
             const [showDaily, setShowDaily] = useState(false);
+            const [openSeasons, setOpenSeasons] = useState({});
             const [newCard, setNewCard] = useState(null);
             const [addedXp, setAddedXp] = useState(null);
             const [showRankUp, setShowRankUp] = useState(null);
@@ -1402,6 +1403,42 @@
                 setShowAdmin(false); 
                 setCurrentUser(null); 
             };
+            
+            // Bestimme aktuelle (nächste zu spielende) Season
+            const getCurrentSeasonIndex = () => {
+                if(currentUser === 'Admin') return 0;
+                
+                for(let i = 0; i < db.curriculum.length; i++) {
+                    const season = db.curriculum[i];
+                    const seasonLessons = season.lessons || [];
+                    const seasonQuiz = db.quizzes[season.id];
+                    
+                    // Prüfe ob alle Lessons abgeschlossen
+                    const allLessonsComplete = seasonLessons.every(l => completedLessons[l.id]);
+                    
+                    // Prüfe ob Quiz abgeschlossen (wenn vorhanden)
+                    const quizComplete = seasonQuiz ? (completedQuizzes[season.id] !== undefined) : true;
+                    
+                    // Wenn diese Season noch nicht komplett ist, ist sie die aktuelle
+                    if(!allLessonsComplete || !quizComplete) {
+                        return i;
+                    }
+                }
+                
+                // Alles abgeschlossen? Zeige letzte Season
+                return db.curriculum.length - 1;
+            };
+
+            const currentSeasonIndex = getCurrentSeasonIndex();
+            const toggleSeason = (seasonId) => {
+                setOpenSeasons(prev => ({
+                    ...prev,
+                    [seasonId]: !prev[seasonId]
+                }));
+            };
+
+
+
 
             if (!currentUser) {
                 return <LoginScreen 
@@ -1474,81 +1511,190 @@
 
                     {/* Main Content */}
                     <div className="max-w-5xl mx-auto p-4 space-y-6">
-                        {db.curriculum.map(season => {
+                        {db.curriculum.map((season, seasonIndex) => {
                             const seasonQuiz = db.quizzes[season.id];
                             const quizCompleted = completedQuizzes[season.id] !== undefined;
                             
+                            // Season Lock Check
+                            let isLocked = false;
+                            let prevSeasonComplete = true;
+                            
+                            if(currentUser !== 'Admin' && seasonIndex > 0) {
+                                const prevSeason = db.curriculum[seasonIndex - 1];
+                                const prevSeasonLessons = prevSeason.lessons || [];
+                                const prevSeasonQuiz = db.quizzes[prevSeason.id];
+                                
+                                const allPrevLessonsComplete = prevSeasonLessons.every(l => completedLessons[l.id]);
+                                const prevQuizComplete = prevSeasonQuiz ? (completedQuizzes[prevSeason.id] !== undefined) : true;
+                                
+                                prevSeasonComplete = allPrevLessonsComplete && prevQuizComplete;
+                                isLocked = !prevSeasonComplete;
+                            }
+                            
+                            // Season Complete Check
+                            const seasonLessons = season.lessons || [];
+                            const allLessonsComplete = seasonLessons.every(l => completedLessons[l.id]);
+                            const seasonComplete = allLessonsComplete && (seasonQuiz ? quizCompleted : true);
+                            
+                            // Ist diese Season standardmäßig offen?
+                            const isCurrentSeason = seasonIndex === currentSeasonIndex;
+                            const isOpen = openSeasons[season.id] !== undefined ? openSeasons[season.id] : isCurrentSeason;
+                            
+                            // Fortschritt berechnen
+                            const totalItems = seasonLessons.length + (seasonQuiz ? 1 : 0);
+                            const completedItems = seasonLessons.filter(l => completedLessons[l.id]).length + (quizCompleted ? 1 : 0);
+                            const progressPercent = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
+                            
                             return (
-                                <div key={season.id} className="bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-100 anim-slide-right">
-                                    <div className="bg-gradient-to-r from-slate-800 to-slate-700 text-white p-6">
-                                        <h2 className="text-2xl font-black mb-2">{season.title}</h2>
-                                        <p className="text-slate-300 text-sm">{season.description}</p>
+                                <div key={season.id} className={`bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-100 anim-slide-right transition-all ${isLocked ? 'opacity-60' : ''}`}>
+                                    {/* Season Header - KLICKBAR */}
+                                    <div 
+                                        onClick={() => !isLocked && toggleSeason(season.id)}
+                                        className={`bg-gradient-to-r text-white p-6 relative cursor-pointer transition-all hover:shadow-xl ${
+                                            isLocked 
+                                                ? 'from-slate-500 to-slate-400' 
+                                                : seasonComplete
+                                                    ? 'from-green-600 to-emerald-600'
+                                                    : 'from-slate-800 to-slate-700'
+                                        }`}
+                                    >
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <h2 className="text-2xl font-black">{season.title}</h2>
+                                                    {seasonComplete && !isLocked && (
+                                                        <div className="bg-white/20 backdrop-blur px-3 py-1 rounded-full text-xs font-black uppercase flex items-center gap-1">
+                                                            <i className="fas fa-check-circle"></i> Abgeschlossen
+                                                        </div>
+                                                    )}
+                                                    {isLocked && (
+                                                        <div className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-black uppercase flex items-center gap-1">
+                                                            <i className="fas fa-lock"></i> Gesperrt
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <p className={`text-sm mb-3 ${isLocked ? 'text-slate-200' : seasonComplete ? 'text-white/80' : 'text-slate-300'}`}>
+                                                    {season.description}
+                                                </p>
+                                                
+                                                {/* Progress Bar */}
+                                                {!isLocked && (
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex-1 bg-black/20 rounded-full h-2 overflow-hidden">
+                                                            <div 
+                                                                className="bg-white h-full transition-all duration-500"
+                                                                style={{width: `${progressPercent}%`}}
+                                                            ></div>
+                                                        </div>
+                                                        <span className="text-sm font-bold whitespace-nowrap">
+                                                            {completedItems}/{totalItems}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                
+                                                {isLocked && (
+                                                    <div className="mt-3 bg-black/20 backdrop-blur rounded-lg p-3 border border-white/20">
+                                                        <p className="text-sm font-bold text-yellow-300">
+                                                            <i className="fas fa-exclamation-circle mr-1"></i>
+                                                            Schließe erst die vorherige Season ab!
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
+                                            {/* Toggle Button */}
+                                            <button 
+                                                className="ml-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all shrink-0"
+                                                onClick={(e) => { e.stopPropagation(); !isLocked && toggleSeason(season.id); }}
+                                            >
+                                                <i className={`fas fa-chevron-${isOpen ? 'up' : 'down'} transition-transform`}></i>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="p-4 space-y-3">
-                                        {season.lessons && season.lessons.map(lesson => {
-                                            const completed = completedLessons[lesson.id];
-                                            const isBoss = lesson.type === 'boss';
-                                            return (
+                                    
+                                    {/* Season Content - NUR WENN OFFEN */}
+                                    {isOpen && (
+                                        <div className="p-4 space-y-3">
+                                            {season.lessons && season.lessons.map(lesson => {
+                                                const completed = completedLessons[lesson.id];
+                                                const isBoss = lesson.type === 'boss';
+                                                
+                                                return (
+                                                    <button 
+                                                        key={lesson.id}
+                                                        onClick={() => !isLocked && setActiveLesson(lesson)}
+                                                        disabled={isLocked}
+                                                        className={`w-full p-4 rounded-xl font-bold text-left transition-all flex items-center justify-between ${
+                                                            isLocked 
+                                                                ? 'bg-slate-100 border-2 border-slate-200 text-slate-400 cursor-not-allowed'
+                                                                : completed 
+                                                                    ? 'bg-green-50 border-2 border-green-200 text-green-700' 
+                                                                    : 'bg-slate-50 border-2 border-slate-200 text-slate-700 hover:border-blue-400 hover:shadow-lg hover:scale-[1.02]'
+                                                        } ${isBoss && !isLocked ? 'ring-2 ring-purple-500' : ''}`}
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                                                isLocked
+                                                                    ? 'bg-slate-200 text-slate-400'
+                                                                    : isBoss 
+                                                                        ? 'bg-purple-100 text-purple-600' 
+                                                                        : 'bg-blue-100 text-blue-600'
+                                                            }`}>
+                                                                <i className={`fas ${isLocked ? 'fa-lock' : isBoss ? 'fa-crown' : 'fa-graduation-cap'}`}></i>
+                                                            </div>
+                                                            <div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className={`text-xs font-black uppercase ${isLocked ? 'text-slate-400' : 'text-slate-500'}`}>
+                                                                        Level {lesson.id}
+                                                                    </div>
+                                                                    {isBoss && !isLocked && <span className="bg-purple-500 text-white text-xs px-2 py-0.5 rounded-full font-black uppercase">Boss</span>}
+                                                                </div>
+                                                                <div>{lesson.title}</div>
+                                                            </div>
+                                                        </div>
+                                                        {completed && !isLocked && <i className="fas fa-check-circle text-green-500 text-2xl"></i>}
+                                                    </button>
+                                                );
+                                            })}
+                                            
+                                            {seasonQuiz && (
                                                 <button 
-                                                    key={lesson.id}
-                                                    onClick={() => setActiveLesson(lesson)} 
-                                                    className={`w-full p-4 rounded-xl font-bold text-left transition-all flex items-center justify-between ${
-                                                        completed 
-                                                            ? 'bg-green-50 border-2 border-green-200 text-green-700' 
-                                                            : 'bg-slate-50 border-2 border-slate-200 text-slate-700 hover:border-blue-400 hover:shadow-lg hover:scale-[1.02]'
-                                                    } ${isBoss ? 'ring-2 ring-purple-500' : ''}`}
+                                                    onClick={() => !isLocked && setActiveQuiz(seasonQuiz)}
+                                                    disabled={isLocked}
+                                                    className={`w-full p-4 rounded-xl font-bold text-left transition-all flex items-center justify-between mt-4 border-2 ${
+                                                        isLocked
+                                                            ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                                                            : quizCompleted
+                                                                ? 'bg-yellow-50 border-yellow-300 text-yellow-700'
+                                                                : 'bg-orange-50 border-orange-200 text-orange-700 hover:border-orange-400 hover:shadow-lg hover:scale-[1.02]'
+                                                    }`}
                                                 >
                                                     <div className="flex items-center gap-3">
                                                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                                            isBoss 
-                                                                ? 'bg-purple-100 text-purple-600' 
-                                                                : 'bg-blue-100 text-blue-600'
+                                                            isLocked ? 'bg-slate-200 text-slate-400' : 'bg-orange-100 text-orange-600'
                                                         }`}>
-                                                            <i className={`fas ${isBoss ? 'fa-crown' : 'fa-graduation-cap'}`}></i>
+                                                            <i className={`fas ${isLocked ? 'fa-lock' : 'fa-clipboard-question'}`}></i>
                                                         </div>
                                                         <div>
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="text-xs text-slate-500 font-black uppercase">Level {lesson.id}</div>
-                                                                {isBoss && <span className="bg-purple-500 text-white text-xs px-2 py-0.5 rounded-full font-black uppercase">Boss</span>}
-                                                            </div>
-                                                            <div>{lesson.title}</div>
+                                                            <div className={`text-xs font-black uppercase ${isLocked ? 'text-slate-400' : 'text-orange-500'}`}>Quiz</div>
+                                                            <div>{seasonQuiz.title}</div>
                                                         </div>
                                                     </div>
-                                                    {completed && <i className="fas fa-check-circle text-green-500 text-2xl"></i>}
+                                                    {quizCompleted && !isLocked && (
+                                                        <div className="text-right">
+                                                            <i className="fas fa-trophy text-yellow-500 text-2xl"></i>
+                                                            <div className="text-xs">{completedQuizzes[season.id]} Punkte</div>
+                                                        </div>
+                                                    )}
                                                 </button>
-                                            );
-                                        })}
-                                        
-                                        {seasonQuiz && (
-                                            <button 
-                                                onClick={() => setActiveQuiz(seasonQuiz)} 
-                                                className={`w-full p-4 rounded-xl font-bold text-left transition-all flex items-center justify-between mt-4 border-2 ${
-                                                    quizCompleted
-                                                        ? 'bg-yellow-50 border-yellow-300 text-yellow-700'
-                                                        : 'bg-orange-50 border-orange-200 text-orange-700 hover:border-orange-400 hover:shadow-lg hover:scale-[1.02]'
-                                                }`}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center">
-                                                        <i className="fas fa-clipboard-question"></i>
-                                                    </div>
-                                                    <div>
-                                                        <div className="text-xs text-orange-500 font-black uppercase">Quiz</div>
-                                                        <div>{seasonQuiz.title}</div>
-                                                    </div>
-                                                </div>
-                                                {quizCompleted && (
-                                                    <div className="text-right">
-                                                        <i className="fas fa-trophy text-yellow-500 text-2xl"></i>
-                                                        <div className="text-xs">{completedQuizzes[season.id]} Punkte</div>
-                                                    </div>
-                                                )}
-                                            </button>
-                                        )}
-                                    </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}
+
+
 
                         {db.curriculum.length === 0 && (
                             <div className="text-center py-12">
